@@ -22,6 +22,12 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
+// public 폴더 대신 프로젝트 루트 경로 지정
+app.use(express.static(__dirname));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // 테이블 자동 생성 (서버 시작 시 실행)
 async function initDB() {
