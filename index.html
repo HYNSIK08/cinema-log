@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>시네마 로그 - 영화 감상 기록</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; margin: 40px 0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #3b3b98; border-bottom: 2px solid #3b3b98; padding-bottom: 12px; margin-top: 0; }
+        .btn { padding: 9px 16px; background-color: #3b3b98; color: white; text-decoration: none; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; display: inline-block; }
+        .btn:hover { background-color: #2e2e78; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px 10px; text-align: left; }
+        th { background-color: #f8f9fc; color: #444; font-weight: bold; }
+        .search-box { margin-bottom: 15px; display: flex; gap: 8px; }
+        .search-box input { flex: 1; padding: 9px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎬 시네마 감상평 게시판(Cinema Review board)</h1>
+    
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="영화 제목으로 검색하세요..." onkeyup="renderList()">
+        <button type="button" class="btn" onclick="renderList()">검색</button>
+    </div>
+
+    <div style="text-align: right; margin-bottom: 15px;">
+        <a href="addForm.html" class="btn">+ 새 감상평 등록</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">번호</th>
+                <th style="width: 40%;">영화 제목</th>
+                <th style="width: 20%;">기록자</th>
+                <th style="width: 15%;">조회수</th>
+                <th style="width: 15%;">관리</th>
+            </tr>
+        </thead>
+        <tbody id="movieTableBody">
+            <!-- 자바스크립트로 데이터가 생성됩니다 -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // 기본 샘플 데이터 초기화
+    function initData() {
+        if (!localStorage.getItem('movies')) {
+            const initialMovies = [
+                {
+                    id: 1,
+                    title: "스파이더맨: 브랜드 뉴 데이",
+                    writer: "피터팬",
+                    views: 0,
+                    content: "[장르] 슈퍼히어로, 액션, 모험, 드라마, 로맨스, SF, 스릴러, 범죄\n\n[감상평] 피터파커의 액션과 피터파커를 잊은 친구들의 서사를 알고 있으니까 너무 좀 슬프지만 액션으로 인해 환기 되는것같아!"
+                }
+            ];
+            localStorage.setItem('movies', JSON.stringify(initialMovies));
+        }
+    }
+
+    // 목록 출력 기능
+    function renderList() {
+        const movies = JSON.parse(localStorage.getItem('movies')) || [];
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        const tbody = document.getElementById('movieTableBody');
+        tbody.innerHTML = '';
+
+        const filtered = movies.filter(m => m.title.toLowerCase().includes(keyword));
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">등록된 감상평이 없습니다.</td></tr>';
+            return;
+        }
+
+        filtered.forEach((m, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${filtered.length - idx}</td>
+                <td><a href="detail.html?id=${m.id}" style="color:#2c3e50; font-weight:bold; text-decoration:none;">${m.title}</a></td>
+                <td>${m.writer}</td>
+                <td>${m.views}</td>
+                <td><a href="editForm.html?id=${m.id}" style="color:#3b3b98; text-decoration:none;">수정</a></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.onload = function() {
+        initData();
+        renderList();
+    };
+</script>
+</body>
+</html>

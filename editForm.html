@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>감상평 수정 - 시네마 로그</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; margin: 40px 0; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { color: #3b3b98; margin-top: 0; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; color: #333; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; outline: none; }
+        textarea { height: 160px; resize: vertical; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { padding: 10px 18px; color: white; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; display: inline-block; font-size: 14px; text-align: center; }
+        .btn-save { background-color: #3b3b98; }
+        .btn-cancel { background-color: #7f8c8d; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>✏️ 감상평 수정</h2>
+    <form id="editForm">
+        <div class="form-group">
+            <label>영화 제목</label>
+            <input type="text" id="title" required />
+        </div>
+        <div class="form-group">
+            <label>추천자 / 작성자</label>
+            <input type="text" id="writer" required />
+        </div>
+        <div class="form-group">
+            <label>장르 및 후기</label>
+            <textarea id="content" required></textarea>
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-save">수정 완료</button>
+            <a id="cancelBtn" class="btn btn-cancel">취소</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const movieId = Number(urlParams.get('id')) || 1;
+    let movies = JSON.parse(localStorage.getItem('movies')) || [];
+    let movie = movies.find(m => m.id === movieId);
+
+    if (movie) {
+        document.getElementById('title').value = movie.title;
+        document.getElementById('writer').value = movie.writer;
+        document.getElementById('content').value = movie.content;
+        document.getElementById('cancelBtn').href = `detail.html?id=${movie.id}`;
+    }
+
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (movie) {
+            movie.title = document.getElementById('title').value;
+            movie.writer = document.getElementById('writer').value;
+            movie.content = document.getElementById('content').value;
+
+            localStorage.setItem('movies', JSON.stringify(movies));
+            alert('수정이 완료되었습니다!');
+            window.location.href = `detail.html?id=${movie.id}`;
+        }
+    });
+</script>
+</body>
+</html>
