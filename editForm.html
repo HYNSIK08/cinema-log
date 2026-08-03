@@ -11,7 +11,6 @@
         .nav-menu { list-style: none; display: flex; gap: 20px; margin: 0; padding: 0; align-items: center; }
         .nav-menu a { color: #dcdde1; text-decoration: none; font-size: 15px; font-weight: bold; transition: 0.2s; }
         .nav-menu a:hover { color: #ffffff; text-decoration: underline; }
-
         .container { max-width: 550px; margin: 40px auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         h2 { color: #3b3b98; margin-top: 0; border-bottom: 2px solid #3b3b98; padding-bottom: 10px; }
         .form-group { margin-bottom: 18px; }
@@ -25,7 +24,6 @@
     </style>
 </head>
 <body>
-
 <nav class="navbar">
     <div class="nav-left">
         <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
@@ -36,7 +34,6 @@
         </ul>
     </div>
 </nav>
-
 <div class="container">
     <h2>✏️ 감상평 수정</h2>
     <form id="editForm">
@@ -58,33 +55,48 @@
         </div>
     </form>
 </div>
-
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const movieId = Number(urlParams.get('id')) || 1;
-    let movies = JSON.parse(localStorage.getItem('movies')) || [];
-    let movie = movies.find(m => m.id === movieId);
+    const movieId = urlParams.get('id');
 
-    if (movie) {
-        document.getElementById('title').value = movie.title;
-        document.getElementById('writer').value = movie.writer;
-        document.getElementById('content').value = movie.content;
-        document.getElementById('cancelBtn').href = `detail.html?id=${movie.id}`;
+    async function loadData() {
+        if (!movieId) return;
+        try {
+            const response = await fetch(`/api/movies/${movieId}`);
+            if (response.ok) {
+                const movie = await response.json();
+                document.getElementById('title').value = movie.title;
+                document.getElementById('writer').value = movie.writer;
+                document.getElementById('content').value = movie.content;
+                document.getElementById('cancelBtn').href = `detail.html?id=${movie.id}`;
+            }
+        } catch (error) {
+            console.error('불러오기 실패:', error);
+        }
     }
 
-    document.getElementById('editForm').addEventListener('submit', function(e) {
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
-        if (movie) {
-            movie.title = document.getElementById('title').value;
-            movie.writer = document.getElementById('writer').value;
-            movie.content = document.getElementById('content').value;
-
-            localStorage.setItem('movies', JSON.stringify(movies));
-            alert('수정이 완료되었습니다!');
-            window.location.href = `detail.html?id=${movie.id}`;
+        const updatedMovie = {
+            title: document.getElementById('title').value,
+            writer: document.getElementById('writer').value,
+            content: document.getElementById('content').value
+        };
+        try {
+            const response = await fetch(`/api/movies/${movieId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedMovie)
+            });
+            if (response.ok) {
+                alert('수정이 완료되었습니다!');
+                window.location.href = `detail.html?id=${movieId}`;
+            }
+        } catch (error) {
+            console.error('수정 오류:', error);
         }
     });
+    window.onload = loadData;
 </script>
 </body>
 </html>

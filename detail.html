@@ -11,7 +11,6 @@
         .nav-menu { list-style: none; display: flex; gap: 20px; margin: 0; padding: 0; align-items: center; }
         .nav-menu a { color: #dcdde1; text-decoration: none; font-size: 15px; font-weight: bold; transition: 0.2s; }
         .nav-menu a:hover { color: #ffffff; text-decoration: underline; }
-
         .container { max-width: 650px; margin: 40px auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         h2 { color: #3b3b98; margin-top: 0; border-bottom: 2px solid #3b3b98; padding-bottom: 10px; }
         .info { background: #f8f9fa; padding: 15px 20px; border-radius: 8px; margin: 20px 0; line-height: 1.8; }
@@ -24,7 +23,6 @@
     </style>
 </head>
 <body>
-
 <nav class="navbar">
     <div class="nav-left">
         <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
@@ -35,51 +33,55 @@
         </ul>
     </div>
 </nav>
-
 <div class="container">
     <h2 id="movieTitle"></h2>
-    
     <div class="info">
         <div><strong>작성자:</strong> <span id="movieWriter"></span></div>
         <div><strong>조회수:</strong> <span id="movieViews"></span></div>
     </div>
-    
     <h3 style="font-size: 16px; color: #333;">장르 및 감상평</h3>
     <div class="content-box" id="movieContent"></div>
-
     <div class="btn-group">
         <a href="index.html" class="btn btn-list">목록으로</a>
         <a id="editBtn" class="btn btn-edit">수정</a>
         <button type="button" class="btn btn-delete" onclick="deleteMovie()">삭제</button>
     </div>
 </div>
-
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const movieId = Number(urlParams.get('id')) || 1;
-    let movies = JSON.parse(localStorage.getItem('movies')) || [];
-    let movieIndex = movies.findIndex(m => m.id === movieId);
+    const movieId = urlParams.get('id');
 
-    if (movieIndex !== -1) {
-        movies[movieIndex].views += 1;
-        localStorage.setItem('movies', JSON.stringify(movies));
-
-        const movie = movies[movieIndex];
-        document.getElementById('movieTitle').innerText = movie.title;
-        document.getElementById('movieWriter').innerText = movie.writer;
-        document.getElementById('movieViews').innerText = movie.views;
-        document.getElementById('movieContent').innerText = movie.content;
-        document.getElementById('editBtn').href = `editForm.html?id=${movie.id}`;
-    }
-
-    function deleteMovie() {
-        if (confirm("정말로 이 감상평을 삭제하시겠습니까?")) {
-            movies = movies.filter(m => m.id !== movieId);
-            localStorage.setItem('movies', JSON.stringify(movies));
-            alert("삭제되었습니다.");
-            window.location.href = "index.html";
+    async function loadDetail() {
+        if (!movieId) return;
+        try {
+            const response = await fetch(`/api/movies/${movieId}`);
+            if (response.ok) {
+                const movie = await response.json();
+                document.getElementById('movieTitle').innerText = movie.title;
+                document.getElementById('movieWriter').innerText = movie.writer;
+                document.getElementById('movieViews').innerText = movie.views;
+                document.getElementById('movieContent').innerText = movie.content;
+                document.getElementById('editBtn').href = `editForm.html?id=${movie.id}`;
+            }
+        } catch (error) {
+            console.error('상세 정보 로드 실패:', error);
         }
     }
+
+    async function deleteMovie() {
+        if (confirm("정말로 이 감상평을 삭제하시겠습니까?")) {
+            try {
+                const response = await fetch(`/api/movies/${movieId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert("삭제되었습니다.");
+                    window.location.href = "index.html";
+                }
+            } catch (error) {
+                console.error('삭제 오류:', error);
+            }
+        }
+    }
+    window.onload = loadDetail;
 </script>
 </body>
 </html>

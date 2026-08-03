@@ -5,34 +5,26 @@
     <title>시네마 로그 - 메인페이지</title>
     <style>
         body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; margin: 0; padding-bottom: 40px; }
-        
-        /* 메뉴바 스타일 수정: 좌측 정렬 */
         .navbar { background-color: #3b3b98; display: flex; align-items: center; padding: 0 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .nav-left { display: flex; align-items: center; gap: 30px; }
         .navbar-brand { font-size: 20px; font-weight: bold; color: white; text-decoration: none; padding: 15px 0; }
         .nav-menu { list-style: none; display: flex; gap: 20px; margin: 0; padding: 0; align-items: center; }
         .nav-menu a { color: #dcdde1; text-decoration: none; font-size: 15px; font-weight: bold; transition: 0.2s; }
         .nav-menu a:hover, .nav-menu a.active { color: #ffffff; text-decoration: underline; }
-        
         .container { max-width: 850px; margin: 30px auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .hero-banner { background: #eef2f7; padding: 25px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #3b3b98; }
         .hero-banner h1 { margin: 0 0 10px 0; color: #2c3e50; font-size: 24px; }
         .hero-banner p { margin: 0; color: #666; font-size: 14px; }
-        
         .btn { padding: 9px 16px; background-color: #3b3b98; color: white; text-decoration: none; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; display: inline-block; }
         .btn:hover { background-color: #2e2e78; }
-        
         .search-box { margin-bottom: 20px; display: flex; gap: 8px; }
         .search-box input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; font-size: 14px; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border-bottom: 1px solid #eee; padding: 12px 10px; text-align: left; }
         th { background-color: #f8f9fc; color: #444; font-weight: bold; }
     </style>
 </head>
 <body>
-
-<!-- 상단 메뉴바 (좌측 배치) -->
 <nav class="navbar">
     <div class="nav-left">
         <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
@@ -43,18 +35,15 @@
         </ul>
     </div>
 </nav>
-
 <div class="container">
     <div class="hero-banner">
         <h1>나만의 영화 감상 기록 공간</h1>
         <p>인상 깊게 본 영화의 후기와 장르를 기록하고 언제든지 검색해 보세요.</p>
     </div>
-    
     <div class="search-box">
         <input type="text" id="searchInput" placeholder="찾고 싶은 영화 제목을 입력하세요..." onkeyup="renderList()">
         <button type="button" class="btn" onclick="renderList()">검색</button>
     </div>
-
     <table>
         <thead>
             <tr>
@@ -65,64 +54,37 @@
                 <th style="width: 13%;">관리</th>
             </tr>
         </thead>
-        <tbody id="movieTableBody">
-        </tbody>
+        <tbody id="movieTableBody"></tbody>
     </table>
 </div>
-
 <script>
-    function initData() {
-        if (!localStorage.getItem('movies')) {
-            const initialMovies = [
-                {
-                    id: 1,
-                    title: "스파이더맨: 브랜드 뉴 데이",
-                    writer: "피터팬",
-                    views: 0,
-                    content: "[장르] 슈퍼히어로, 액션, 모험, 드라마, 로맨스, SF, 스릴러, 범죄\n\n[감상평] 피터파커의 액션과 피터파커를 잊은 친구들의 서사를 알고 있으니까 너무 좀 슬프지만 액션으로 인해 환기 되는것같아!"
-                }
-            ];
-            localStorage.setItem('movies', JSON.stringify(initialMovies));
-        }
-    }
-
-    function renderList() {
-        const movies = JSON.parse(localStorage.getItem('movies')) || [];
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlSearch = urlParams.get('search');
-        
-        if (urlSearch && !document.getElementById('searchInput').value) {
-            document.getElementById('searchInput').value = urlSearch;
-        }
-
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
+    async function renderList() {
+        const keyword = document.getElementById('searchInput').value;
         const tbody = document.getElementById('movieTableBody');
-        tbody.innerHTML = '';
-
-        const filtered = movies.filter(m => m.title.toLowerCase().includes(keyword));
-
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:30px 0;">검색 결과 또는 등록된 감상평이 없습니다.</td></tr>';
-            return;
+        try {
+            const response = await fetch(`/api/movies?search=${encodeURIComponent(keyword)}`);
+            const movies = await response.json();
+            tbody.innerHTML = '';
+            if (movies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:30px 0;">등록된 감상평이 없습니다.</td></tr>';
+                return;
+            }
+            movies.forEach((m, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${movies.length - idx}</td>
+                    <td><a href="detail.html?id=${m.id}" style="color:#2c3e50; font-weight:bold; text-decoration:none;">${m.title}</a></td>
+                    <td>${m.writer}</td>
+                    <td>${m.views}</td>
+                    <td><a href="editForm.html?id=${m.id}" style="color:#3b3b98; text-decoration:none;">수정</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error("데이터 로드 실패:", error);
         }
-
-        filtered.forEach((m, idx) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${filtered.length - idx}</td>
-                <td><a href="detail.html?id=${m.id}" style="color:#2c3e50; font-weight:bold; text-decoration:none;">${m.title}</a></td>
-                <td>${m.writer}</td>
-                <td>${m.views}</td>
-                <td><a href="editForm.html?id=${m.id}" style="color:#3b3b98; text-decoration:none;">수정</a></td>
-            `;
-            tbody.appendChild(tr);
-        });
     }
-
-    window.onload = function() {
-        initData();
-        renderList();
-    };
+    window.onload = renderList;
 </script>
 </body>
 </html>
