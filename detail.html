@@ -4,9 +4,15 @@
     <meta charset="UTF-8">
     <title>영화 감상 상세 - 시네마 로그</title>
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; margin: 40px 0; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2 { color: #3b3b98; margin-top: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; margin: 0; padding-bottom: 40px; }
+        .navbar { background-color: #3b3b98; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 20px; font-weight: bold; color: white; text-decoration: none; padding: 15px 0; }
+        .nav-menu { list-style: none; display: flex; gap: 20px; margin: 0; padding: 0; align-items: center; }
+        .nav-menu a { color: #dcdde1; text-decoration: none; font-size: 15px; font-weight: bold; transition: 0.2s; }
+        .nav-menu a:hover { color: #ffffff; text-decoration: underline; }
+
+        .container { max-width: 650px; margin: 40px auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { color: #3b3b98; margin-top: 0; border-bottom: 2px solid #3b3b98; padding-bottom: 10px; }
         .info { background: #f8f9fa; padding: 15px 20px; border-radius: 8px; margin: 20px 0; line-height: 1.8; }
         .content-box { white-space: pre-wrap; line-height: 1.7; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; background: #fff; min-height: 100px; }
         .btn-group { margin-top: 25px; display: flex; gap: 10px; }
@@ -17,6 +23,16 @@
     </style>
 </head>
 <body>
+
+<nav class="navbar">
+    <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
+    <ul class="nav-menu">
+        <li><a href="index.html">메인</a></li>
+        <li><a href="about.html">사이트 소개</a></li>
+        <li><a href="addForm.html">+ 감상평 등록</a></li>
+    </ul>
+</nav>
+
 <div class="container">
     <h2 id="movieTitle"></h2>
     
@@ -29,7 +45,7 @@
     <div class="content-box" id="movieContent"></div>
 
     <div class="btn-group">
-        <a href="list.html" class="btn btn-list">목록으로</a>
+        <a href="index.html" class="btn btn-list">목록으로</a>
         <a id="editBtn" class="btn btn-edit">수정</a>
         <button type="button" class="btn btn-delete" onclick="deleteMovie()">삭제</button>
     </div>
@@ -42,7 +58,6 @@
     let movieIndex = movies.findIndex(m => m.id === movieId);
 
     if (movieIndex !== -1) {
-        // 조회수 1 증가 (도전형 요구사항)
         movies[movieIndex].views += 1;
         localStorage.setItem('movies', JSON.stringify(movies));
 
@@ -59,7 +74,7 @@
             movies = movies.filter(m => m.id !== movieId);
             localStorage.setItem('movies', JSON.stringify(movies));
             alert("삭제되었습니다.");
-            window.location.href = "list.html";
+            window.location.href = "index.html";
         }
     }
 </script>
