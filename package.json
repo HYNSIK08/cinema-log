@@ -1,14 +1,12 @@
 {
   "name": "cinema-log",
   "version": "1.0.0",
-  "description": "Cinema Log 웹 애플리케이션",
+  "description": "영화 감상평 다크 갤러리",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6"
+    "express": "^4.18.2"
   }
 }
