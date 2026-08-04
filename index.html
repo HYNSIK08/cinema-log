@@ -233,7 +233,6 @@
                     const card = document.createElement('div');
                     card.className = 'api-movie-card';
                     
-                    // TMDB 고화질 포스터 사용
                     const posterUrl = movie.poster_path 
                         ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
                         : '';
@@ -264,32 +263,32 @@
         }
     }
 
-    // 외부 네트워크 통신 실패 시도 견디는 고화질 고정 포스터 데이터
+    // 업로드해주신 포스터 이미지로 정돈된 백업 데이터 함수
     function renderBackupMovies(container) {
         const fallbackMovies = [
             { 
                 id: 1022789, 
                 title: "인사이드 아웃 2", 
                 vote: "8.5", 
-                img: "./image/GjZfWIr1ASIrhzYSmiT8OmmeenSiqUYWQiy_-OJeP6Aj_cNVjyib18awcji_D6n8qXwfp2tyubWKF036aAwMVA.jpg" 
+                img: "./image/insideout2.jpg" 
             },
             { 
                 id: 934632, 
                 title: "파묘", 
                 vote: "8.2", 
-                img: "./image/1j7IGrLxBqt2G0S1jPfQrOH42IqtXqx6YI6a6NO_yxo5fDqsZDNXaV2OoBgD4oonafsG5ruQN4nIOtCo0ngNfA.jpg" 
+                img: "./image/pamyo.jpg" 
             },
             { 
                 id: 1011985, 
                 title: "범죄도시 4", 
                 vote: "7.8", 
-                img: "./image/rrHaHzTJSB5C7asmwf7DtFFVhVRB7mHMxo3W2UgFEskNo7zpQI68SL_2M7Bbftl3YoM-6yp-ydelIm7U2pOwHw.jpg" 
+                img: "./image/crimecity4.jpg" 
             },
             { 
                 id: 76600, 
                 title: "아바타: 물의 길", 
                 vote: "8.8", 
-                img: "./image/EHZQffmrWR6mvuDFZFVfSLDZnux6vbMliyinxYrlRz_Q698fuDtFMDBDNc8wCcn7fuqbaAJEBUE-3-tKbDAugw.jpg" 
+                img: "./image/avatar2.jpg" 
             }
         ];
 
