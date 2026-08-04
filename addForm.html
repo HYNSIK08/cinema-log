@@ -94,12 +94,12 @@
         const contentVal = document.getElementById('content').value;
 
         const newMovie = {
-            title: titleVal,
-            genre: genreVal,
-            writer: writerVal,
-            content: contentVal
-        };
-
+    title: titleVal,
+    genre: genreVal,
+    writer: writerVal,
+    content: contentVal,
+    createdAt: new Date().toISOString()
+};
         try {
             const response = await fetch('/api/movies', {
                 method: 'POST',
