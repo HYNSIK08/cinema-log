@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시네마 로그 - 영화 상세 정보</title>
+    <title>시네마 로그 - 상세 정보</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -14,6 +14,7 @@
             --accent-hover: #5b4bc4;
             --border-color: #334155;
             --warning-color: #f1c40f;
+            --danger-color: #ef4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,12 +55,14 @@
         .overview-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: var(--text-main); }
         .overview-text { font-size: 14px; line-height: 1.7; color: var(--text-sub); white-space: pre-line; word-break: keep-all; }
 
-        .action-btns { display: flex; gap: 12px; }
-        .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; display: inline-block; transition: 0.2s; text-align: center; }
+        .action-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn { padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; text-align: center; }
         .btn-primary { background-color: var(--accent-color); color: white; }
         .btn-primary:hover { background-color: var(--accent-hover); }
         .btn-secondary { background-color: #334155; color: white; }
         .btn-secondary:hover { background-color: #475569; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
 
         @media (max-width: 768px) {
             .movie-detail-container { flex-direction: column; }
@@ -76,7 +79,7 @@
         <ul class="nav-menu">
             <li><a href="index.html">메인</a></li>
             <li><a href="about.html">사이트 소개</a></li>
-            <li><a href="#" class="active">영화 상세 정보</a></li>
+            <li><a href="#" class="active">상세 정보</a></li>
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
     </div>
@@ -93,45 +96,120 @@
 <script>
     const TMDB_API_KEY = 'f97987814400762f02f8373b5a1b32d2';
 
-    // URL 파라미터 가져오기 (movieId 또는 title)
+    // URL 파라미터 가져오기 (id: 자체 작성 감상평 ID / movieId: TMDB ID / title: 영화 제목)
     const urlParams = new URLSearchParams(window.location.search);
+    const reviewId = urlParams.get('id'); 
     const apiMovieId = urlParams.get('movieId');
     const movieTitle = urlParams.get('title');
 
-    async function fetchMovieDetails() {
-        const container = document.getElementById('detailContent');
+    function checkAdmin() {
+        return localStorage.getItem('isAdmin') === 'true';
+    }
 
-        try {
-            let movie = null;
-
-            // 1. API ID가 직접 넘어온 경우
-            if (apiMovieId) {
-                const res = await fetch(`https://api.themoviedb.org/3/movie/${apiMovieId}?api_key=${TMDB_API_KEY}&language=ko-KR`);
-                if (res.ok) movie = await res.json();
-            } 
-            // 2. 영화 제목으로 검색해서 넘어온 경우
-            else if (movieTitle) {
-                const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(movieTitle)}`);
-                const data = await res.json();
-                if (data.results && data.results.length > 0) {
-                    movie = data.results[0]; // 가장 연관성 높은 첫 번째 결과 선택
-                }
-            }
-
-            // 데이터가 있는 경우 화면 렌더링
-            if (movie) {
-                renderMovieDetail(movie);
-            } else {
-                renderNotFound();
-            }
-
-        } catch (err) {
-            console.error('영화 상세 로드 실패:', err);
+    async function loadPageData() {
+        // 1. 등록된 게시물 감상평 조회 (id 파라미터가 있을 때)
+        if (reviewId) {
+            await fetchUserReview(reviewId);
+        } 
+        // 2. 외부 API 영화 상세 조회 (movieId 또는 title 파라미터가 있을 때)
+        else if (apiMovieId || movieTitle) {
+            await fetchApiMovieDetails();
+        } 
+        // 3. 파라미터가 없으면 에러 표기
+        else {
             renderNotFound();
         }
     }
 
-    function renderMovieDetail(m) {
+    // 📝 [유형 1] 사용자가 직접 등록한 감상평 게시물 로드
+    async function fetchUserReview(id) {
+        try {
+            const isAdmin = checkAdmin();
+            const res = await fetch(`/api/movies/${id}?isAdmin=${isAdmin}`);
+            
+            if (!res.ok) throw new Error('게시글을 찾을 수 없습니다.');
+            const data = await res.json();
+            
+            renderUserReview(data);
+        } catch (err) {
+            console.error('감상평 로드 에러:', err);
+            renderNotFound('존재하지 않거나 삭제된 감상평입니다.');
+        }
+    }
+
+    // 🎬 [유형 2] TMDB API 외부 영화 상세 로드
+    async function fetchApiMovieDetails() {
+        try {
+            let movie = null;
+
+            if (apiMovieId) {
+                const res = await fetch(`https://api.themoviedb.org/3/movie/${apiMovieId}?api_key=${TMDB_API_KEY}&language=ko-KR`);
+                if (res.ok) movie = await res.json();
+            } 
+            
+            if (!movie && movieTitle) {
+                const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(movieTitle)}`);
+                const data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    // 검색된 결과 중 가장 상위 영화의 상세 정보를 다시 조회 (tagline, runtime 등 확보)
+                    const detailRes = await fetch(`https://api.themoviedb.org/3/movie/${data.results[0].id}?api_key=${TMDB_API_KEY}&language=ko-KR`);
+                    if (detailRes.ok) movie = await detailRes.json();
+                    else movie = data.results[0];
+                }
+            }
+
+            if (movie) {
+                renderApiMovieDetail(movie);
+            } else {
+                renderNotFound('영화 API 정보를 가져올 수 없습니다.');
+            }
+
+        } catch (err) {
+            console.error('API 상세 로드 에러:', err);
+            renderNotFound('서버 통신 중 문제가 발생했습니다.');
+        }
+    }
+
+    // 🎨 [뷰 렌더링 1] 사용자가 작성한 감상평 렌더링
+    function renderUserReview(m) {
+        const dateStr = m.createdAt 
+            ? new Date(m.createdAt).toLocaleDateString('ko-KR') 
+            : (m.date || '날짜 정보 없음');
+
+        document.getElementById('detailContent').innerHTML = `
+            <div class="info-box" style="width:100%;">
+                <div>
+                    <div class="movie-header">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h1 class="movie-title">${m.title}</h1>
+                            <span class="meta-badge" style="color:var(--accent-color); font-weight:bold;">${m.genre || '기타'}</span>
+                        </div>
+                    </div>
+
+                    <div class="meta-list">
+                        <span class="meta-badge">✍️ 작성자: ${m.writer}</span>
+                        <span class="meta-badge">📅 등록일: ${dateStr}</span>
+                        <span class="meta-badge">👁️ 조회수: ${m.views || 0}</span>
+                        <span class="meta-badge vote-badge">👍 좋아요: ${m.likes || 0}</span>
+                    </div>
+
+                    <div class="overview-box">
+                        <div class="overview-title">📝 영화 감상평</div>
+                        <div class="overview-text">${m.content || '작성된 감상평 내용이 없습니다.'}</div>
+                    </div>
+                </div>
+
+                <div class="action-btns" style="margin-top:20px;">
+                    <a href="index.html" class="btn btn-secondary">&larr; 목록으로</a>
+                    <button type="button" class="btn btn-primary" onclick="likeReview(${m.id})">👍 추천하기</button>
+                    ${checkAdmin() ? `<button type="button" class="btn btn-danger" onclick="deleteReview(${m.id})">🗑️ 게시글 삭제 (관리자)</button>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // 🎨 [뷰 렌더링 2] API 외부 영화 상세 렌더링
+    function renderApiMovieDetail(m) {
         const posterUrl = m.poster_path 
             ? `https://image.tmdb.org/t/p/w500${m.poster_path}` 
             : 'https://via.placeholder.com/280x400/1e293b/f8fafc?text=No+Poster';
@@ -139,7 +217,7 @@
         const genres = m.genres ? m.genres.map(g => g.name).join(', ') : '정보 없음';
         const releaseDate = m.release_date || '정보 없음';
         const voteAvg = m.vote_average ? m.vote_average.toFixed(1) : '0.0';
-        const overview = m.overview ? m.overview : '등록된 상세 줄거리 정보가 없습니다.';
+        const overview = m.overview ? m.overview : '등록된 줄거리 정보가 없습니다.';
 
         document.getElementById('detailContent').innerHTML = `
             <div class="poster-box">
@@ -172,17 +250,47 @@
         `;
     }
 
-    function renderNotFound() {
+    // ⚠️ 찾을 수 없을 때의 렌더링
+    function renderNotFound(message = '요청하신 영화 정보가 존재하지 않거나 불러오지 못했습니다.') {
         document.getElementById('detailContent').innerHTML = `
             <div style="text-align:center; width:100%; padding:50px; color:var(--text-sub);">
-                <h2 style="color:var(--text-main); margin-bottom:10px;">🔍 영화 정보를 찾을 수 없습니다.</h2>
-                <p style="margin-bottom:20px;">요청하신 영화 정보가 존재하지 않거나 불러오지 못했습니다.</p>
+                <h2 style="color:var(--text-main); margin-bottom:10px;">🔍 정보를 찾을 수 없습니다.</h2>
+                <p style="margin-bottom:20px;">${message}</p>
                 <a href="index.html" class="btn btn-primary">메인으로 돌아가기</a>
             </div>
         `;
     }
 
-    window.onload = fetchMovieDetails;
+    // 👍 감상평 좋아요 기능
+    async function likeReview(id) {
+        try {
+            const res = await fetch(`/api/movies/${id}/like`, { method: 'POST' });
+            if (res.ok) {
+                alert('추천되었습니다!');
+                fetchUserReview(id); // 화면 새로고침
+            }
+        } catch (err) {
+            alert('좋아요 처리 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 🗑️ 감상평 삭제 기능 (관리자 전용)
+    async function deleteReview(id) {
+        if (!confirm('정말 이 감상평을 삭제하시겠습니까?')) return;
+        try {
+            const res = await fetch(`/api/movies/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                alert('감상평이 삭제되었습니다.');
+                window.location.href = 'index.html';
+            } else {
+                alert('삭제 실패');
+            }
+        } catch (err) {
+            alert('삭제 요청 중 오류 발생');
+        }
+    }
+
+    window.onload = loadPageData;
 </script>
 </body>
 </html>
