@@ -6,7 +6,7 @@ const mysql = require('mysql2/promise');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// TMDB API 키 및 URL 직접 지정
+// TMDB API 정보
 const TMDB_API_KEY = '0de30fcff153e1d01942f9fe2e563d0b';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -14,11 +14,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 정적 파일 경로 지정
+// 정적 파일 연결
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Clever Cloud MySQL 연결
+// MySQL 연결 풀
 const pool = mysql.createPool({
     host: process.env.MYSQLHOST || process.env.MYSQL_ADDON_HOST || 'localhost',
     user: process.env.MYSQLUSER || process.env.MYSQL_ADDON_USER || 'root',
@@ -34,7 +34,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// DB 테이블 생성
+// DB 테이블 준비
 async function initDB() {
     try {
         const connection = await pool.getConnection();
@@ -52,9 +52,9 @@ async function initDB() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
         connection.release();
-        console.log('✅ MySQL 연결 및 테이블 생성 완료');
+        console.log('✅ MySQL 연결 및 DB 데이터 준비 완료');
     } catch (err) {
-        console.error('⚠️ MySQL DB 연결 안 됨 (로컬 스토리지 모드 가능):', err.message);
+        console.error('⚠️ DB 연결 실패 (서버 API 전용 모드 동작 중):', err.message);
     }
 }
 initDB();
@@ -63,49 +63,57 @@ const ADMIN_ID = "hyunsik";
 const ADMIN_PW = "7356";
 
 // ----------------------------------------------------
-// 🎬 TMDB API 직접 호출 엔드포인트
+// 🎬 TMDB API 엔드포인트
 // ----------------------------------------------------
 
-// TMDB 인기 영화 (API 키 파라미터 직접 사용)
+// 1. TMDB 인기 영화 목록
 app.get('/api/tmdb/popular', async (req, res) => {
     try {
         const url = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`;
         const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`TMDB HTTP Error: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`TMDB HTTP Error: ${response.status}`);
         const data = await response.json();
         res.json(data);
     } catch (error) {
-        console.error('TMDB Popular fetch error:', error.message);
-        res.status(500).json({ error: 'TMDB 데이터를 가져오지 못했습니다.', results: [] });
+        console.error('TMDB Popular error:', error.message);
+        res.status(500).json({ error: 'TMDB 데이터를 불러오지 못했습니다.', results: [] });
     }
 });
 
-// TMDB 영화 검색 (API 키 파라미터 직접 사용)
+// 2. TMDB 영화 검색
 app.get('/api/tmdb/search', async (req, res) => {
     const query = req.query.query;
-    if (!query) {
-        return res.status(400).json({ error: '검색어가 필요합니다.' });
-    }
+    if (!query) return res.status(400).json({ error: '검색어가 필요합니다.' });
+    
     try {
         const url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(query)}&page=1`;
         const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`TMDB HTTP Error: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`TMDB HTTP Error: ${response.status}`);
         const data = await response.json();
         res.json(data);
     } catch (error) {
-        console.error('TMDB Search fetch error:', error.message);
-        res.status(500).json({ error: 'TMDB 검색을 진행할 수 없습니다.', results: [] });
+        console.error('TMDB Search error:', error.message);
+        res.status(500).json({ error: 'TMDB 검색 실패', results: [] });
+    }
+});
+
+// 3. ✅ [신규] TMDB 영화 상세 정보 API (/api/tmdb/movie/:id)
+app.get('/api/tmdb/movie/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const url = `${TMDB_BASE_URL}/movie/${id}?api_key=${TMDB_API_KEY}&language=ko-KR`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`TMDB HTTP Error: ${response.status}`);
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('TMDB Detail error:', error.message);
+        res.status(500).json({ error: 'TMDB 영화 상세 정보를 불러올 수 없습니다.' });
     }
 });
 
 // ----------------------------------------------------
-// 📝 서비스 API
+// 📝 DB 게시글 서비스 API
 // ----------------------------------------------------
 
 app.post('/api/login', (req, res) => {
@@ -113,10 +121,11 @@ app.post('/api/login', (req, res) => {
     if (id === ADMIN_ID && password === ADMIN_PW) {
         res.json({ success: true, message: "관리자 인증 성공" });
     } else {
-        res.status(401).json({ success: false, message: "아이디 또는 비밀번호가 올바르지 않습니다." });
+        res.status(401).json({ success: false, message: "비밀번호 오류" });
     }
 });
 
+// 감상평 목록 조회 (서버 DB 우선)
 app.get('/api/movies', async (req, res) => {
     const { search, genre, isAdmin } = req.query;
     let sql = "SELECT * FROM movies WHERE 1=1";
@@ -143,6 +152,7 @@ app.get('/api/movies', async (req, res) => {
     }
 });
 
+// 감상평 단일 조회
 app.get('/api/movies/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -194,7 +204,7 @@ app.patch('/api/movies/:id/toggle-hide', async (req, res) => {
     const { isHidden } = req.body;
     try {
         await pool.query("UPDATE movies SET isHidden = ? WHERE id = ?", [isHidden ? 1 : 0, id]);
-        res.json({ message: "숨김 상태 변경 완료" });
+        res.json({ message: "상태 변경 성공" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -220,5 +230,5 @@ app.delete('/api/movies', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`🚀 서버 구동 중: http://localhost:${PORT}`);
 });
