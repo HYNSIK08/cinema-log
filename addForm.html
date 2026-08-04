@@ -2,65 +2,47 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>새 감상평 등록 - 시네마 로그</title>
+    <title>시네마 로그 - 감상평 작성</title>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-sub: #94a3b8;
-            --accent-color: #6c5ce7;
-            --border-color: #334155;
+        :root { 
+            --bg-color: #0f172a; 
+            --card-bg: #1e293b; 
+            --text-main: #f8fafc; 
+            --text-sub: #94a3b8; 
+            --accent-color: #6c5ce7; 
+            --border-color: #334155; 
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding-bottom: 50px; }
-
-        .navbar { background-color: var(--card-bg); display: flex; align-items: center; justify-content: space-between; padding: 15px 40px; border-bottom: 1px solid var(--border-color); }
-        .nav-left { display: flex; align-items: center; gap: 30px; }
-        .navbar-brand { font-size: 20px; font-weight: bold; color: var(--text-main); text-decoration: none; }
-        .nav-menu { list-style: none; display: flex; gap: 20px; align-items: center; }
-        .nav-menu a { color: var(--text-sub); text-decoration: none; font-weight: bold; transition: 0.2s; }
-        .nav-menu a:hover, .nav-menu a.active { color: var(--accent-color); }
-
-        .container { max-width: 550px; margin: 50px auto; background: var(--card-bg); padding: 35px; border-radius: 12px; border: 1px solid var(--border-color); }
-        h2 { color: var(--text-main); margin-bottom: 20px; border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; }
-
-        .form-group { margin-bottom: 20px; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding: 40px 20px; }
+        
+        .form-container { max-width: 600px; margin: 0 auto; background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); }
+        h2 { margin-bottom: 20px; color: var(--text-main); text-align: center; }
+        .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--text-sub); }
-        input[type="text"], select, textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); outline: none; }
-        input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--accent-color); }
-        textarea { height: 140px; resize: vertical; }
-
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { padding: 12px; color: white; border-radius: 8px; border: none; cursor: pointer; text-decoration: none; text-align: center; font-weight: bold; flex: 1; }
-        .btn-save { background-color: var(--accent-color); }
-        .btn-cancel { background-color: #475569; }
+        input, select, textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); outline: none; }
+        textarea { height: 120px; resize: none; }
+        
+        .btn-submit { width: 100%; padding: 14px; background: var(--accent-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-submit:hover { background: #5b4bc4; }
+        .btn-submit:disabled { background: #475569; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-<nav class="navbar">
-    <div class="nav-left">
-        <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
-        <ul class="nav-menu">
-            <li><a href="index.html">메인</a></li>
-            <li><a href="about.html">사이트 소개</a></li>
-            <li><a href="addForm.html" class="active">+ 감상평 등록</a></li>
-        </ul>
-    </div>
-</nav>
-
-<div class="container">
-    <h2>🎬 새 감상평 등록</h2>
-    <form id="addForm">
+<div class="form-container">
+    <h2>✍️ 새 영화 감상평 작성</h2>
+    <form id="reviewForm" onsubmit="submitReview(event)">
         <div class="form-group">
-            <label>영화 제목</label>
-            <input type="text" id="title" required placeholder="영화 제목을 입력하세요">
+            <label for="title">영화 제목</label>
+            <input type="text" id="title" required maxlength="50" placeholder="영화 제목을 입력하세요">
         </div>
         <div class="form-group">
-            <label>장르 선택</label>
-            <select id="genre">
+            <label for="writer">작성자</label>
+            <input type="text" id="writer" required maxlength="15" placeholder="작성자 이름">
+        </div>
+        <div class="form-group">
+            <label for="genre">장르</label>
+            <select id="genre" required>
                 <option value="액션">액션</option>
                 <option value="드라마">드라마</option>
                 <option value="코미디">코미디</option>
@@ -70,63 +52,72 @@
             </select>
         </div>
         <div class="form-group">
-            <label>작성자</label>
-            <input type="text" id="writer" required placeholder="작성자 이름">
+            <label for="content">감상평 내용</label>
+            <textarea id="content" required placeholder="영화에 대한 리뷰를 남겨주세요"></textarea>
         </div>
-        <div class="form-group">
-            <label>감상평</label>
-            <textarea id="content" required placeholder="영화 후기 및 감상을 남겨주세요."></textarea>
-        </div>
-        <div class="btn-group">
-            <button type="submit" class="btn btn-save">저장하기</button>
-            <a href="index.html" class="btn btn-cancel">취소</a>
-        </div>
+        <button type="submit" class="btn-submit" id="submitBtn">감상평 등록</button>
     </form>
 </div>
+
 <script>
-    // 🌟 URL에서 자동으로 영화 제목(title) 파라미터를 읽어와 입력칸에 자동으로 넣어줍니다.
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const titleParam = urlParams.get('title');
-        if (titleParam) {
-            document.getElementById('title').value = titleParam;
+    // ⏰ 10시간 쿨타임 설정 (10시간 * 60분 * 60초 * 1000밀리초 = 36,000,000 ms)
+    const COOL_TIME_MS = 10 * 60 * 60 * 1000; 
+
+    async function submitReview(event) {
+        event.preventDefault();
+
+        const submitBtn = document.getElementById('submitBtn');
+        const lastSubmitTime = localStorage.getItem('lastReviewTime');
+        const now = Date.now();
+
+        // 1. 10시간 쿨타임 검사
+        if (lastSubmitTime) {
+            const timePassed = now - parseInt(lastSubmitTime);
+            if (timePassed < COOL_TIME_MS) {
+                const remainMs = COOL_TIME_MS - timePassed;
+                
+                const hours = Math.floor(remainMs / (1000 * 60 * 60));
+                const minutes = Math.floor((remainMs % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remainMs % (1000 * 60)) / 1000);
+
+                alert(`🚫 도배 방지: 감상평은 10시간에 한 번만 작성할 수 있습니다.\n\n남은 시간: ${hours}시간 ${minutes}분 ${seconds}초`);
+                return;
+            }
         }
-    };
 
-    document.getElementById('addForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+        // 2. 연속 입력/클릭 방지 (버튼 즉시 비활성화)
+        submitBtn.disabled = true;
+        submitBtn.innerText = "등록 중...";
 
-        const titleVal = document.getElementById('title').value;
-        const genreVal = document.getElementById('genre').value;
-        const writerVal = document.getElementById('writer').value;
-        const contentVal = document.getElementById('content').value;
-
-        const newMovie = {
-            title: titleVal,
-            genre: genreVal,
-            writer: writerVal,
-            content: contentVal,
-            createdAt: new Date().toISOString()
-        };
+        const title = document.getElementById('title').value.trim();
+        const writer = document.getElementById('writer').value.trim();
+        const genre = document.getElementById('genre').value;
+        const content = document.getElementById('content').value.trim();
 
         try {
-            const response = await fetch('/api/movies', {
+            const res = await fetch('/api/movies', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newMovie)
+                body: JSON.stringify({ title, writer, genre, content })
             });
 
-            if (response.ok) {
-                alert('DB에 성공적으로 저장되었습니다!');
+            if (res.ok) {
+                // 작성 성공 시 현재 시간 기록
+                localStorage.setItem('lastReviewTime', Date.now().toString());
+                alert('감상평이 성공적으로 등록되었습니다!');
                 window.location.href = 'index.html';
             } else {
-                alert('저장 실패: 서버 응답 오류');
+                alert('등록에 실패했습니다. 다시 시도해주세요.');
+                submitBtn.disabled = false;
+                submitBtn.innerText = "감상평 등록";
             }
-        } catch (error) {
-            console.error('오류 발생:', error);
-            alert('서버와 통신할 수 없습니다. node server.js가 실행 중인지 확인하세요.');
+        } catch (err) {
+            console.error('에러 발생:', err);
+            alert('서버와 통신 중 에러가 발생했습니다.');
+            submitBtn.disabled = false;
+            submitBtn.innerText = "감상평 등록";
         }
-    });
+    }
 </script>
 </body>
 </html>

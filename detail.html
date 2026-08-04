@@ -2,332 +2,122 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시네마 로그 - 상세 정보</title>
+    <title>시네마 로그 - 감상평 작성</title>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-sub: #94a3b8;
-            --accent-color: #6c5ce7;
-            --accent-hover: #5b4bc4;
-            --border-color: #334155;
-            --warning-color: #f1c40f;
-            --danger-color: #ef4444;
+        :root { 
+            --bg-color: #0f172a; 
+            --card-bg: #1e293b; 
+            --text-main: #f8fafc; 
+            --text-sub: #94a3b8; 
+            --accent-color: #6c5ce7; 
+            --border-color: #334155; 
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding-bottom: 50px; }
-
-        .navbar { background-color: var(--card-bg); display: flex; align-items: center; justify-content: space-between; padding: 15px 40px; border-bottom: 1px solid var(--border-color); }
-        .nav-left { display: flex; align-items: center; gap: 30px; }
-        .navbar-brand { font-size: 20px; font-weight: bold; color: var(--text-main); text-decoration: none; }
-        .nav-menu { list-style: none; display: flex; gap: 20px; align-items: center; }
-        .nav-menu a { color: var(--text-sub); text-decoration: none; font-weight: bold; transition: 0.2s; }
-        .nav-menu a:hover, .nav-menu a.active { color: var(--accent-color); }
-
-        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding: 40px 20px; }
         
-        .movie-detail-container { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 16px; 
-            padding: 30px; 
-            display: flex;
-            gap: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-        }
-
-        .poster-box { flex-shrink: 0; width: 280px; }
-        .poster-box img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; display: block; }
-
-        .info-box { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .movie-header { margin-bottom: 15px; }
-        .movie-title { font-size: 28px; font-weight: bold; color: var(--text-main); margin-bottom: 8px; }
-        .movie-tagline { font-size: 15px; color: var(--accent-color); font-style: italic; margin-bottom: 12px; }
-
-        .meta-list { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; font-size: 14px; }
-        .meta-badge { background: #0f172a; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; color: var(--text-sub); }
-        .vote-badge { background: rgba(241, 196, 15, 0.1); border: 1px solid var(--warning-color); color: var(--warning-color); font-weight: bold; }
-
-        .overview-box { background: #0f172a; border: 1px solid var(--border-color); padding: 20px; border-radius: 10px; margin-bottom: 20px; flex: 1; }
-        .overview-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: var(--text-main); }
-        .overview-text { font-size: 14px; line-height: 1.7; color: var(--text-sub); white-space: pre-line; word-break: keep-all; }
-
-        .action-btns { display: flex; gap: 12px; flex-wrap: wrap; }
-        .btn { padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; text-align: center; }
-        .btn-primary { background-color: var(--accent-color); color: white; }
-        .btn-primary:hover { background-color: var(--accent-hover); }
-        .btn-secondary { background-color: #334155; color: white; }
-        .btn-secondary:hover { background-color: #475569; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-danger:hover { background-color: #dc2626; }
-
-        @media (max-width: 768px) {
-            .movie-detail-container { flex-direction: column; }
-            .poster-box { width: 100%; text-align: center; }
-            .poster-box img { max-width: 250px; margin: 0 auto; }
-        }
+        .form-container { max-width: 600px; margin: 0 auto; background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); }
+        h2 { margin-bottom: 20px; color: var(--text-main); text-align: center; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--text-sub); }
+        input, select, textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); outline: none; }
+        textarea { height: 120px; resize: none; }
+        
+        .btn-submit { width: 100%; padding: 14px; background: var(--accent-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-submit:hover { background: #5b4bc4; }
+        .btn-submit:disabled { background: #475569; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-<nav class="navbar">
-    <div class="nav-left">
-        <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
-        <ul class="nav-menu">
-            <li><a href="index.html">메인</a></li>
-            <li><a href="about.html">사이트 소개</a></li>
-            <li><a href="#" class="active">상세 정보</a></li>
-            <li><a href="addForm.html">+ 감상평 등록</a></li>
-        </ul>
-    </div>
-</nav>
-
-<div class="container">
-    <div class="movie-detail-container" id="detailContent">
-        <div style="text-align:center; width:100%; padding:50px; color:var(--text-sub);">
-            ⚡ 영화 정보를 불러오는 중입니다...
+<div class="form-container">
+    <h2>✍️ 새 영화 감상평 작성</h2>
+    <form id="reviewForm" onsubmit="submitReview(event)">
+        <div class="form-group">
+            <label for="title">영화 제목</label>
+            <input type="text" id="title" required maxlength="50" placeholder="영화 제목을 입력하세요">
         </div>
-    </div>
+        <div class="form-group">
+            <label for="writer">작성자</label>
+            <input type="text" id="writer" required maxlength="15" placeholder="작성자 이름">
+        </div>
+        <div class="form-group">
+            <label for="genre">장르</label>
+            <select id="genre" required>
+                <option value="액션">액션</option>
+                <option value="드라마">드라마</option>
+                <option value="코미디">코미디</option>
+                <option value="SF/판타지">SF/판타지</option>
+                <option value="스릴러/공포">스릴러/공포</option>
+                <option value="기타" selected>기타</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="content">감상평 내용</label>
+            <textarea id="content" required placeholder="영화에 대한 리뷰를 남겨주세요"></textarea>
+        </div>
+        <button type="submit" class="btn-submit" id="submitBtn">감상평 등록</button>
+    </form>
 </div>
 
 <script>
-    const TMDB_API_KEY = 'f97987814400762f02f8373b5a1b32d2';
+    // ⏰ 10시간 쿨타임 설정 (10시간 * 60분 * 60초 * 1000밀리초 = 36,000,000 ms)
+    const COOL_TIME_MS = 10 * 60 * 60 * 1000; 
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const reviewId = urlParams.get('id'); 
-    const apiMovieId = urlParams.get('movieId');
-    const movieTitle = urlParams.get('title');
+    async function submitReview(event) {
+        event.preventDefault();
 
-    // 고화질 실제 영화 포스터 URL 백업 데이터
-    const FALLBACK_MOVIES = {
-        "1022789": { 
-            title: "인사이드 아웃 2", 
-            vote_average: 8.5, 
-            release_date: "2024-06-12", 
-            genres: [{name: "애니메이션"}, {name: "모험"}], 
-            overview: "13살이 된 라일리의 머릿속 감정 컨트롤 본부. 새로운 감정들('불안', '당황', '따분', '부러움')이 눈을 뜨고, 기존 감정들과 갈등을 빚기 시작한다.", 
-            tagline: "괜찮아, 모든 것이 다 변해도!",
-            poster_path: "EHZQffmrWR6mvuDFZFVfSLDZnux6vbMliyinxYrlRz_Q698fuDtFMDBDNc8wCcn7fuqbaAJEBUE-3-tKbDAugw.jpg"
-        },
-        "934632": { 
-            title: "파묘", 
-            vote_average: 8.2, 
-            release_date: "2024-02-22", 
-            genres: [{name: "공포"}, {name: "미스터리"}], 
-            overview: "거액의 돈을 받고 수상한 묘를 이장한 무당과 장의사, 풍수사들에게 일어나는 기이한 사건을 그린 영화.", 
-            tagline: "험한 것이 나왔다.",
-            poster_path: "EHZQffmrWR6mvuDFZFVfSLDZnux6vbMliyinxYrlRz_Q698fuDtFMDBDNc8wCcn7fuqbaAJEBUE-3-tKbDAugw.jpg"
-        },
-        "1011985": { 
-            title: "범죄도시 4", 
-            vote_average: 7.8, 
-            release_date: "2024-04-24", 
-            genres: [{name: "범죄"}, {name: "액션"}], 
-            overview: "괴물형사 마석도가 대규모 온라인 불법 도박 조직을 움직이는 특수부대 용병 출신 백창기와 IT 업계 천재 CEO 장동철을 소탕하기 위해 나선다.", 
-            tagline: "거침없이 싹 싹 쓸어버린다!",
-            poster_path: "EHZQffmrWR6mvuDFZFVfSLDZnux6vbMliyinxYrlRz_Q698fuDtFMDBDNc8wCcn7fuqbaAJEBUE-3-tKbDAugw.jpg"
-        },
-        "76600": { 
-            title: "아바타: 물의 길", 
-            vote_average: 8.8, 
-            release_date: "2022-12-14", 
-            genres: [{name: "SF"}, {name: "모험"}], 
-            overview: "제이크 설리와 네이티리가 이룬 가족이 겪는 무서운 이야기와 살아남기 위한 고군분투, 그리고 겪어내야 할 상처에 대한 이야기.", 
-            tagline: "이것은 새로운 길의 시작이다.",
-            poster_path: "EHZQffmrWR6mvuDFZFVfSLDZnux6vbMliyinxYrlRz_Q698fuDtFMDBDNc8wCcn7fuqbaAJEBUE-3-tKbDAugw.jpg"
+        const submitBtn = document.getElementById('submitBtn');
+        const lastSubmitTime = localStorage.getItem('lastReviewTime');
+        const now = Date.now();
+
+        // 1. 10시간 쿨타임 검사
+        if (lastSubmitTime) {
+            const timePassed = now - parseInt(lastSubmitTime);
+            if (timePassed < COOL_TIME_MS) {
+                const remainMs = COOL_TIME_MS - timePassed;
+                
+                const hours = Math.floor(remainMs / (1000 * 60 * 60));
+                const minutes = Math.floor((remainMs % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remainMs % (1000 * 60)) / 1000);
+
+                alert(`🚫 도배 방지: 감상평은 10시간에 한 번만 작성할 수 있습니다.\n\n남은 시간: ${hours}시간 ${minutes}분 ${seconds}초`);
+                return;
+            }
         }
-    };
 
-    function checkAdmin() {
-        return localStorage.getItem('isAdmin') === 'true';
-    }
+        // 2. 연속 입력/클릭 방지 (버튼 즉시 비활성화)
+        submitBtn.disabled = true;
+        submitBtn.innerText = "등록 중...";
 
-    async function loadPageData() {
-        if (reviewId) {
-            await fetchUserReview(reviewId);
-        } else if (apiMovieId || movieTitle) {
-            await fetchApiMovieDetails();
-        } else {
-            renderNotFound();
-        }
-    }
+        const title = document.getElementById('title').value.trim();
+        const writer = document.getElementById('writer').value.trim();
+        const genre = document.getElementById('genre').value;
+        const content = document.getElementById('content').value.trim();
 
-    async function fetchUserReview(id) {
         try {
-            const isAdmin = checkAdmin();
-            const res = await fetch(`/api/movies/${id}?isAdmin=${isAdmin}`);
-            if (!res.ok) throw new Error('게시글을 찾을 수 없습니다.');
-            const data = await res.json();
-            renderUserReview(data);
-        } catch (err) {
-            console.error('감상평 로드 에러:', err);
-            renderNotFound('존재하지 않거나 삭제된 감상평입니다.');
-        }
-    }
+            const res = await fetch('/api/movies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, writer, genre, content })
+            });
 
-    async function fetchApiMovieDetails() {
-        try {
-            let movie = null;
-
-            if (apiMovieId) {
-                const res = await fetch(`https://api.themoviedb.org/3/movie/${apiMovieId}?api_key=${TMDB_API_KEY}&language=ko-KR`);
-                if (res.ok) movie = await res.json();
-            } 
-            
-            if (!movie && movieTitle) {
-                const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(movieTitle)}`);
-                const data = await res.json();
-                if (data.results && data.results.length > 0) {
-                    const detailRes = await fetch(`https://api.themoviedb.org/3/movie/${data.results[0].id}?api_key=${TMDB_API_KEY}&language=ko-KR`);
-                    if (detailRes.ok) movie = await detailRes.json();
-                    else movie = data.results[0];
-                }
-            }
-
-            // API 로딩 실패 시 백업 내장 데이터 활용
-            if (!movie && apiMovieId && FALLBACK_MOVIES[apiMovieId]) {
-                movie = FALLBACK_MOVIES[apiMovieId];
-            } else if (!movie && movieTitle) {
-                const foundKey = Object.keys(FALLBACK_MOVIES).find(k => FALLBACK_MOVIES[k].title === movieTitle);
-                if (foundKey) movie = FALLBACK_MOVIES[foundKey];
-            }
-
-            if (movie) {
-                renderApiMovieDetail(movie);
-            } else {
-                renderNotFound('영화 정보를 찾을 수 없습니다.');
-            }
-
-        } catch (err) {
-            console.error('API 상세 로드 에러:', err);
-            if (apiMovieId && FALLBACK_MOVIES[apiMovieId]) {
-                renderApiMovieDetail(FALLBACK_MOVIES[apiMovieId]);
-            } else {
-                renderNotFound('영화 상세 정보를 불러올 수 없습니다.');
-            }
-        }
-    }
-
-    function renderUserReview(m) {
-        const dateStr = m.createdAt 
-            ? new Date(m.createdAt).toLocaleDateString('ko-KR') 
-            : (m.date || '날짜 정보 없음');
-
-        document.getElementById('detailContent').innerHTML = `
-            <div class="info-box" style="width:100%;">
-                <div>
-                    <div class="movie-header">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h1 class="movie-title">${m.title}</h1>
-                            <span class="meta-badge" style="color:var(--accent-color); font-weight:bold;">${m.genre || '기타'}</span>
-                        </div>
-                    </div>
-
-                    <div class="meta-list">
-                        <span class="meta-badge">✍️ 작성자: ${m.writer}</span>
-                        <span class="meta-badge">📅 등록일: ${dateStr}</span>
-                        <span class="meta-badge">👁️ 조회수: ${m.views || 0}</span>
-                        <span class="meta-badge vote-badge">👍 좋아요: ${m.likes || 0}</span>
-                    </div>
-
-                    <div class="overview-box">
-                        <div class="overview-title">📝 영화 감상평</div>
-                        <div class="overview-text">${m.content || '작성된 감상평 내용이 없습니다.'}</div>
-                    </div>
-                </div>
-
-                <div class="action-btns" style="margin-top:20px;">
-                    <a href="index.html" class="btn btn-secondary">&larr; 목록으로</a>
-                    <button type="button" class="btn btn-primary" onclick="likeReview(${m.id})">👍 추천하기</button>
-                    ${checkAdmin() ? `<button type="button" class="btn btn-danger" onclick="deleteReview(${m.id})">🗑️ 게시글 삭제 (관리자)</button>` : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    function renderApiMovieDetail(m) {
-        let posterUrl = m.poster_path 
-            ? (m.poster_path.startsWith('http') ? m.poster_path : `https://image.tmdb.org/t/p/w500${m.poster_path}`)
-            : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500';
-
-        const genres = m.genres ? m.genres.map(g => g.name).join(', ') : '정보 없음';
-        const releaseDate = m.release_date || '정보 없음';
-        const voteAvg = m.vote_average ? m.vote_average.toFixed(1) : '0.0';
-        const overview = m.overview ? m.overview : '등록된 줄거리 정보가 없습니다.';
-
-        document.getElementById('detailContent').innerHTML = `
-            <div class="poster-box">
-                <img src="${posterUrl}" alt="${m.title}" 
-                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500';">
-            </div>
-            <div class="info-box">
-                <div>
-                    <div class="movie-header">
-                        <h1 class="movie-title">${m.title}</h1>
-                        ${m.tagline ? `<div class="movie-tagline">"${m.tagline}"</div>` : ''}
-                    </div>
-
-                    <div class="meta-list">
-                        <span class="meta-badge vote-badge">★ 평점 ${voteAvg}</span>
-                        <span class="meta-badge">📅 개봉일: ${releaseDate}</span>
-                        <span class="meta-badge">🎬 장르: ${genres}</span>
-                    </div>
-
-                    <div class="overview-box">
-                        <div class="overview-title">📖 줄거리</div>
-                        <div class="overview-text">${overview}</div>
-                    </div>
-                </div>
-
-                <div class="action-btns">
-                    <a href="index.html" class="btn btn-secondary">&larr; 목록으로</a>
-                    <a href="addForm.html?title=${encodeURIComponent(m.title)}" class="btn btn-primary">✍️ 이 영화 감상평 남기기</a>
-                </div>
-            </div>
-        `;
-    }
-
-    function renderNotFound(message = '요청하신 영화 정보가 존재하지 않거나 불러오지 못했습니다.') {
-        document.getElementById('detailContent').innerHTML = `
-            <div style="text-align:center; width:100%; padding:50px; color:var(--text-sub);">
-                <h2 style="color:var(--text-main); margin-bottom:10px;">🔍 정보를 찾을 수 없습니다.</h2>
-                <p style="margin-bottom:20px;">${message}</p>
-                <a href="index.html" class="btn btn-primary">메인으로 돌아가기</a>
-            </div>
-        `;
-    }
-
-    async function likeReview(id) {
-        try {
-            const res = await fetch(`/api/movies/${id}/like`, { method: 'POST' });
             if (res.ok) {
-                alert('추천되었습니다!');
-                fetchUserReview(id);
-            }
-        } catch (err) {
-            alert('좋아요 처리 중 오류가 발생했습니다.');
-        }
-    }
-
-    async function deleteReview(id) {
-        if (!confirm('정말 이 감상평을 삭제하시겠습니까?')) return;
-        try {
-            const res = await fetch(`/api/movies/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                alert('감상평이 삭제되었습니다.');
+                // 작성 성공 시 현재 시간 기록
+                localStorage.setItem('lastReviewTime', Date.now().toString());
+                alert('감상평이 성공적으로 등록되었습니다!');
                 window.location.href = 'index.html';
             } else {
-                alert('삭제 실패');
+                alert('등록에 실패했습니다. 다시 시도해주세요.');
+                submitBtn.disabled = false;
+                submitBtn.innerText = "감상평 등록";
             }
         } catch (err) {
-            alert('삭제 요청 중 오류 발생');
+            console.error('에러 발생:', err);
+            alert('서버와 통신 중 에러가 발생했습니다.');
+            submitBtn.disabled = false;
+            submitBtn.innerText = "감상평 등록";
         }
     }
-
-    window.onload = loadPageData;
 </script>
 </body>
 </html>

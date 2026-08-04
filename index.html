@@ -73,15 +73,18 @@
             transition: transform 0.2s, border-color 0.2s; 
             position: relative; 
             cursor: pointer; 
+            /* 긴 문자열 자동 줄바꿈 처리 */
+            word-break: break-word; 
+            overflow: hidden;
         }
         .movie-card.hidden-card { opacity: 0.6; border-style: dashed; }
         .movie-card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
 
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .card-title { font-size: 18px; font-weight: bold; color: var(--text-main); text-decoration: none; }
-        .genre-badge { background: #0f172a; border: 1px solid var(--border-color); color: var(--accent-color); font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
-        .card-info { font-size: 13px; color: var(--text-sub); margin-bottom: 10px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
-        .card-content { font-size: 14px; color: var(--text-sub); margin-bottom: 15px; display: -webkit-box; line-clamp: 2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 10px; }
+        .card-title { font-size: 18px; font-weight: bold; color: var(--text-main); text-decoration: none; word-break: break-word; }
+        .genre-badge { background: #0f172a; border: 1px solid var(--border-color); color: var(--accent-color); font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: bold; flex-shrink: 0; }
+        .card-info { font-size: 13px; color: var(--text-sub); margin-bottom: 10px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; word-break: break-word; }
+        .card-content { font-size: 14px; color: var(--text-sub); margin-bottom: 15px; display: -webkit-box; line-clamp: 2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; word-break: break-word; }
         .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-sub); }
         .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--text-sub); padding: 50px 0; }
         .hidden-badge { color: var(--danger-color); font-size: 12px; font-weight: bold; }
@@ -111,16 +114,14 @@
 
     <div class="api-section">
         <div class="api-header">
-            <h2 id="apiSectionTitle">🔥 실시간 인기 트렌드 영화 (클릭 시 상세 정보 보기)</h2>
+            <h2 id="apiSectionTitle">🔥 실시간 인기 트렌드 영화</h2>
             <div class="api-search-box">
                 <input type="text" id="apiSearchInput" placeholder="영화 제목 검색..." onkeyup="if(event.key==='Enter') searchApiMovies()">
                 <button type="button" onclick="searchApiMovies()">검색</button>
                 <button type="button" onclick="fetchApiMovies()" style="background:#334155;">인기순</button>
             </div>
         </div>
-        <div class="api-movie-list" id="apiMovieList">
-            <div style="color:var(--text-sub); font-size:14px;">영화 데이터 불러오는 중...</div>
-        </div>
+        <div class="api-movie-list" id="apiMovieList"></div>
     </div>
     
     <h2 style="margin-bottom: 15px; font-size: 20px;">📝 등록된 영화 감상평 목록</h2>
@@ -142,6 +143,10 @@
 </div>
 
 <script>
+    // 🔑 관리자 아이디 및 비밀번호 설정
+    const ADMIN_ID = "admin";
+    const ADMIN_PW = "1234";
+
     function checkAdmin() {
         return localStorage.getItem('isAdmin') === 'true';
     }
@@ -157,7 +162,7 @@
         }
     }
 
-    async function toggleAdmin() {
+    function toggleAdmin() {
         if (checkAdmin()) {
             localStorage.setItem('isAdmin', 'false');
             alert('관리자 모드에서 로그아웃했습니다.');
@@ -169,127 +174,24 @@
             const inputPw = prompt("관리자 비밀번호를 입력하세요:");
             if (inputPw === null) return;
 
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: inputId.trim(), password: inputPw.trim() })
-                });
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    localStorage.setItem('isAdmin', 'true');
-                    alert('관리자 로그인에 성공했습니다!');
-                    updateAdminBtn();
-                    renderList();
-                } else {
-                    alert(result.message || '로그인에 실패했습니다.');
-                    localStorage.setItem('isAdmin', 'false');
-                }
-            } catch (error) {
-                console.error('로그인 요청 오류:', error);
-                alert('서버 통신 실패. server.js 상태를 확인하세요.');
-            }
-        }
-    }
-
-    const TMDB_API_KEY = 'f97987814400762f02f8373b5a1b32d2';
-
-    async function fetchApiMovies() {
-        const titleElem = document.getElementById('apiSectionTitle');
-        if (titleElem) titleElem.innerText = "🔥 실시간 인기 트렌드 영화 (클릭 시 상세 정보 보기)";
-        const url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`;
-        await renderApiMovies(url);
-    }
-
-    async function searchApiMovies() {
-        const inputElem = document.getElementById('apiSearchInput');
-        const query = inputElem ? inputElem.value.trim() : '';
-        if (!query) {
-            alert('검색할 영화 제목을 입력해주세요!');
-            return;
-        }
-        const titleElem = document.getElementById('apiSectionTitle');
-        if (titleElem) titleElem.innerText = `🔍 '${query}' 실시간 검색 결과 (클릭 시 상세 정보 보기)`;
-        const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(query)}&page=1`;
-        await renderApiMovies(url);
-    }
-
-    async function renderApiMovies(url) {
-        const apiContainer = document.getElementById('apiMovieList');
-        if (!apiContainer) return;
-
-        apiContainer.innerHTML = '<div style="color:var(--text-sub); font-size:14px; padding:10px;">⚡ 영화 데이터를 실시간으로 가져오는 중입니다...</div>';
-
-        try {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`API 통신 실패`);
-
-            const data = await res.json();
-            apiContainer.innerHTML = '';
-            
-            if (data.results && data.results.length > 0) {
-                data.results.forEach(movie => {
-                    const card = document.createElement('div');
-                    card.className = 'api-movie-card';
-                    
-                    const posterUrl = movie.poster_path 
-                        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
-                        : '';
-
-                    const voteAvg = movie.vote_average ? movie.vote_average.toFixed(1) : '0.0';
-
-                    card.innerHTML = `
-                        <img src="${posterUrl}" alt="${movie.title}" 
-                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';">
-                        <div class="api-movie-info">
-                            <div class="api-movie-title" title="${movie.title}">${movie.title}</div>
-                            <div class="api-movie-vote">★ ${voteAvg}</div>
-                        </div>
-                    `;
-
-                    card.onclick = () => {
-                        window.location.href = `detail.html?movieId=${movie.id}&title=${encodeURIComponent(movie.title)}`;
-                    };
-
-                    apiContainer.appendChild(card);
-                });
+            // 직접 검증 로직
+            if (inputId.trim() === ADMIN_ID && inputPw.trim() === ADMIN_PW) {
+                localStorage.setItem('isAdmin', 'true');
+                alert('관리자 로그인 성공!');
+                updateAdminBtn();
+                renderList();
             } else {
-                renderBackupMovies(apiContainer);
+                alert('아이디 또는 비밀번호가 올바르지 않습니다.');
             }
-        } catch (err) {
-            console.error("API 연동 오류, 백업 포스터 데이터로 자동 전환:", err);
-            renderBackupMovies(apiContainer);
         }
     }
 
-    // 업로드해주신 포스터 이미지로 정돈된 백업 데이터 함수
     function renderBackupMovies(container) {
         const fallbackMovies = [
-            { 
-                id: 1022789, 
-                title: "인사이드 아웃 2", 
-                vote: "8.5", 
-                img: "./public/image/insideout2.jpg" 
-            },
-            { 
-                id: 934632, 
-                title: "파묘", 
-                vote: "8.2", 
-                img: "./public/image/pamyo.jpg" 
-            },
-            { 
-                id: 1011985, 
-                title: "범죄도시 4", 
-                vote: "7.8", 
-                img: "./public/image/crimecity4.jpg" 
-            },
-            { 
-                id: 76600, 
-                title: "아바타: 물의 길", 
-                vote: "8.8", 
-                img: "./public/image/avatar2.jpg" 
-            }
+            { id: 1022789, title: "인사이드 아웃 2", vote: "8.5", img: "./image/insideout2.jpg" },
+            { id: 934632, title: "파묘", vote: "8.2", img: "./image/pamyo.jpg" },
+            { id: 1011985, title: "범죄도시 4", vote: "7.8", img: "./image/crimecity4.jpg" },
+            { id: 76600, title: "아바타: 물의 길", vote: "8.8", img: "./image/avatar2.jpg" }
         ];
 
         container.innerHTML = '';
@@ -297,38 +199,15 @@
             const card = document.createElement('div');
             card.className = 'api-movie-card';
             card.innerHTML = `
-                <img src="${movie.img}" alt="${movie.title}" 
-                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';">
+                <img src="${movie.img}" alt="${movie.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';">
                 <div class="api-movie-info">
                     <div class="api-movie-title">${movie.title}</div>
                     <div class="api-movie-vote">★ ${movie.vote}</div>
                 </div>
             `;
-            card.onclick = () => {
-                window.location.href = `detail.html?movieId=${movie.id}&title=${encodeURIComponent(movie.title)}`;
-            };
+            card.onclick = () => { window.location.href = `detail.html?movieId=${movie.id}&title=${encodeURIComponent(movie.title)}`; };
             container.appendChild(card);
         });
-    }
-
-    async function initDetailMenu() {
-        const isAdmin = checkAdmin();
-        const detailNav = document.getElementById('recentDetailNav');
-        try {
-            const res = await fetch(`/api/movies?isAdmin=${isAdmin}`);
-            const movies = await res.json();
-            if (movies && movies.length > 0) {
-                movies.sort((a, b) => b.id - a.id);
-                detailNav.href = `detail.html?id=${movies[0].id}`;
-            } else {
-                detailNav.onclick = (e) => {
-                    e.preventDefault();
-                    alert('등록된 영화 감상평이 없습니다.');
-                };
-            }
-        } catch (err) {
-            console.error('메뉴 로드 실패:', err);
-        }
     }
 
     async function renderList() {
@@ -353,13 +232,9 @@
                 const card = document.createElement('div');
                 card.className = `movie-card ${m.isHidden ? 'hidden-card' : ''}`;
                 
-                card.onclick = () => {
-                    window.location.href = `detail.html?id=${m.id}`;
-                };
+                card.onclick = () => { window.location.href = `detail.html?id=${m.id}`; };
 
-                const dateStr = m.createdAt 
-                    ? new Date(m.createdAt).toLocaleDateString('ko-KR') 
-                    : (m.date || '2026. 08. 04');
+                const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : '2026. 08. 04';
 
                 card.innerHTML = `
                     <div>
@@ -385,14 +260,12 @@
         }
     }
 
-   window.onload = () => {
-    updateAdminBtn();
-    // fetchApiMovies(); 대신 아래 백업 함수를 바로 실행
-    const apiContainer = document.getElementById('apiMovieList');
-    if (apiContainer) renderBackupMovies(apiContainer);
-    renderList();
-    initDetailMenu();
-};
+    window.onload = () => {
+        updateAdminBtn();
+        const apiContainer = document.getElementById('apiMovieList');
+        if (apiContainer) renderBackupMovies(apiContainer);
+        renderList();
+    };
 </script>
 </body>
 </html>
