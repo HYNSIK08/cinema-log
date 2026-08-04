@@ -9,7 +9,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Clever Cloud MySQL 연결 풀 생성
 const pool = mysql.createPool({
@@ -22,7 +21,8 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
-// public 폴더 대신 프로젝트 루트 경로 지정
+
+// 정적 파일 제공 (프로젝트 루트 경로)
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
@@ -42,7 +42,8 @@ async function initDB() {
                 content TEXT,
                 views INT DEFAULT 0,
                 likes INT DEFAULT 0,
-                isHidden TINYINT DEFAULT 0
+                isHidden TINYINT DEFAULT 0,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
         connection.release();
@@ -53,8 +54,19 @@ async function initDB() {
 }
 initDB();
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// 🔒 관리자 계정 정보 (서버 관리용)
+const ADMIN_ID = "hyunsik";
+const ADMIN_PW = "7356";
+
+// 🔑 [신규 추가] 관리자 로그인 검증 API
+app.post('/api/login', (req, res) => {
+    const { id, password } = req.body;
+
+    if (id === ADMIN_ID && password === ADMIN_PW) {
+        res.json({ success: true, message: "관리자 인증 성공" });
+    } else {
+        res.status(401).json({ success: false, message: "아이디 또는 비밀번호가 올바르지 않습니다." });
+    }
 });
 
 // 1. 목록 조회 (검색, 장르, 관리자 필터 포함)
