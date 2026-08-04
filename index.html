@@ -18,7 +18,6 @@
             --warning-color: #f59e0b;
         }
 
-        /* 🔒 이용자의 drag 및 선택 금지 */
         * { 
             box-sizing: border-box; 
             margin: 0; 
@@ -56,13 +55,29 @@
         .api-search-box button { padding: 8px 14px; background: var(--accent-color); border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .api-search-box button:hover { background-color: var(--accent-hover); }
 
-        .api-movie-list { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: thin; scrollbar-color: var(--accent-color) var(--card-bg); }
-        .api-movie-card { min-width: 150px; max-width: 150px; background: var(--card-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s, border-color 0.2s; flex-shrink: 0; }
+        .api-movie-list { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; min-height: 270px; scrollbar-width: thin; scrollbar-color: var(--accent-color) var(--card-bg); }
+        .api-movie-card { min-width: 150px; max-width: 150px; background: var(--card-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s, border-color 0.2s; flex-shrink: 0; position: relative; }
         .api-movie-card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
         .api-movie-card img { width: 100%; height: 210px; object-fit: cover; background: #0f172a; display: block; }
         .api-movie-info { padding: 10px; }
         .api-movie-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
         .api-movie-vote { font-size: 12px; color: #f1c40f; margin-top: 4px; font-weight: bold; }
+
+        /* 즐겨찾기 북마크 버튼 */
+        .bookmark-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(15, 23, 42, 0.7);
+            border: none;
+            color: #f1c40f;
+            font-size: 16px;
+            padding: 4px 6px;
+            border-radius: 50%;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+        .bookmark-btn:hover { transform: scale(1.1); }
 
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-danger { padding: 8px 14px; background-color: var(--danger-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
@@ -118,6 +133,19 @@
         .btn-hide-card { color: var(--warning-color); border-color: var(--warning-color); }
         .btn-delete-card { color: var(--danger-color); border-color: var(--danger-color); }
         .hidden-badge { color: var(--warning-color); font-size: 12px; font-weight: bold; }
+
+        .like-btn {
+            background: rgba(108, 92, 231, 0.15);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            padding: 2px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .like-btn:hover { background: var(--accent-color); color: white; }
     </style>
 </head>
 <body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
@@ -143,7 +171,7 @@
         <p>장르별 검색, TMDB 실시간 무비 정보 및 자유로운 감상평 다크 갤러리</p>
     </div>
 
-    <!-- TMDB API 가동 영역 -->
+    <!-- TMDB API 가동 영역 (좋아요 없음 / 즐겨찾기 중복 방지 추가) -->
     <div class="api-section">
         <div class="api-header">
             <h2 id="apiSectionTitle">🔥 실시간 인기 트렌드 영화</h2>
@@ -179,7 +207,9 @@
 </div>
 
 <script>
-    // 🔒 단축키 차단
+    const DIRECT_TMDB_KEY = '0de30fcff153e1d01942f9fe2e563d0b';
+
+    // 보안 단축키 차단
     document.addEventListener('keydown', function(e) {
         if (e.keyCode === 123) { e.preventDefault(); return false; }
         if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
@@ -227,7 +257,7 @@
 
                 if (res.ok) {
                     localStorage.setItem('isAdmin', 'true');
-                    alert('관리자 로그인 성공! 관리자 권한이 부여되었습니다.');
+                    alert('관리자 로그인 성공!');
                     updateAdminBtn();
                     renderList();
                 } else {
@@ -239,23 +269,30 @@
         }
     }
 
-    // 🌐 백엔드를 통한 TMDB 인기 영화 조회
+    // 🌐 백엔드 우선 조회
     async function fetchApiMovies() {
         const container = document.getElementById('apiMovieList');
         document.getElementById('apiSectionTitle').innerText = '🔥 실시간 인기 트렌드 영화';
-        container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">불러오는 중...</div>';
+        container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">영화 목록을 불러오는 중...</div>';
 
         try {
             const res = await fetch('/api/tmdb/popular');
+            if (!res.ok) throw new Error('서버 API 에러');
             const data = await res.json();
             renderApiMovies(data.results || []);
         } catch (err) {
-            console.error('TMDB 로딩 에러:', err);
-            renderBackupMovies(container);
+            try {
+                const directUrl = `https://api.themoviedb.org/3/movie/popular?api_key=${DIRECT_TMDB_KEY}&language=ko-KR&page=1`;
+                const directRes = await fetch(directUrl);
+                const directData = await directRes.json();
+                renderApiMovies(directData.results || []);
+            } catch (directErr) {
+                container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">TMDB 영화 목록을 불러올 수 없습니다.</div>';
+            }
         }
     }
 
-    // 🌐 백엔드를 통한 TMDB 영화 검색
+    // 🌐 TMDB 영화 검색
     async function searchApiMovies() {
         const query = document.getElementById('apiSearchInput').value.trim();
         if (!query) {
@@ -269,23 +306,32 @@
 
         try {
             const res = await fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}`);
+            if (!res.ok) throw new Error('서버 검색 에러');
             const data = await res.json();
             renderApiMovies(data.results || []);
         } catch (err) {
-            console.error('TMDB 검색 에러:', err);
-            container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">검색 중 오류가 발생했습니다.</div>';
+            try {
+                const directUrl = `https://api.themoviedb.org/3/search/movie?api_key=${DIRECT_TMDB_KEY}&language=ko-KR&query=${encodeURIComponent(query)}&page=1`;
+                const directRes = await fetch(directUrl);
+                const directData = await directRes.json();
+                renderApiMovies(directData.results || []);
+            } catch (directErr) {
+                container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">검색에 실패했습니다.</div>';
+            }
         }
     }
 
-    // TMDB 카드 렌더링
+    // ✅ TMDB 트렌드 영역 렌더링 (좋아요 제거 / 즐겨찾기 중복 검사 로직)
     function renderApiMovies(movies) {
         const container = document.getElementById('apiMovieList');
         container.innerHTML = '';
 
-        if (movies.length === 0) {
+        if (!movies || movies.length === 0) {
             container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">검색 결과가 없습니다.</div>';
             return;
         }
+
+        const fallbackImg = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';
 
         movies.forEach(movie => {
             const card = document.createElement('div');
@@ -293,17 +339,19 @@
             
             const posterUrl = movie.poster_path 
                 ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';
+                : fallbackImg;
 
             card.innerHTML = `
-                <img src="${posterUrl}" alt="${movie.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';">
+                <button class="bookmark-btn" onclick="addBookmark(event, ${movie.id}, '${movie.title.replace(/'/g, "\\'")}')" title="즐겨찾기 추가">★</button>
+                <img src="${posterUrl}" alt="${movie.title}" onerror="this.onerror=null; this.src='${fallbackImg}';">
                 <div class="api-movie-info">
                     <div class="api-movie-title" title="${movie.title}">${movie.title}</div>
                     <div class="api-movie-vote">★ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</div>
                 </div>
             `;
             
-            card.onclick = () => {
+            card.onclick = (e) => {
+                if (e.target.classList.contains('bookmark-btn')) return;
                 if (confirm(`'${movie.title}' 영화 감상평을 작성하시겠습니까?`)) {
                     window.location.href = `addForm.html?title=${encodeURIComponent(movie.title)}`;
                 }
@@ -312,32 +360,24 @@
         });
     }
 
-    // 예비 폴백 데이터
-    function renderBackupMovies(container) {
-        const fallbackMovies = [
-            { id: 1022789, title: "인사이드 아웃 2", vote: "8.5", img: "./image/insideout2.jpg" },
-            { id: 934632, title: "파묘", vote: "8.2", img: "./image/pamyo.jpg" },
-            { id: 1011985, title: "범죄도시 4", vote: "7.8", img: "./image/crimecity4.jpg" },
-            { id: 76600, title: "아바타: 물의 길", vote: "8.8", img: "./image/avatar2.jpg" }
-        ];
+    // ✅ 즐겨찾기 중복 저장 방지 함수
+    function addBookmark(event, tmdbId, title) {
+        event.stopPropagation();
+        let bookmarks = JSON.parse(localStorage.getItem('myBookmarks') || '[]');
+        
+        // 중복 저장 검사
+        const isExist = bookmarks.some(b => b.id === tmdbId);
+        if (isExist) {
+            alert(`'${title}' 영화는 이미 즐겨찾기에 등록되어 있습니다.`);
+            return;
+        }
 
-        container.innerHTML = '';
-        fallbackMovies.forEach(movie => {
-            const card = document.createElement('div');
-            card.className = 'api-movie-card';
-            card.innerHTML = `
-                <img src="${movie.img}" alt="${movie.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';">
-                <div class="api-movie-info">
-                    <div class="api-movie-title">${movie.title}</div>
-                    <div class="api-movie-vote">★ ${movie.vote}</div>
-                </div>
-            `;
-            card.onclick = () => { window.location.href = `addForm.html?title=${encodeURIComponent(movie.title)}`; };
-            container.appendChild(card);
-        });
+        bookmarks.push({ id: tmdbId, title: title, date: new Date().toLocaleDateString('ko-KR') });
+        localStorage.setItem('myBookmarks', JSON.stringify(bookmarks));
+        alert(`'${title}' 영화가 즐겨찾기에 등록되었습니다!`);
     }
 
-    // 등록된 영화 감상평 목록 렌더링
+    // ✅ DB 감상평 목록 렌더링 (서버 API 우선 호출 & detail.html?id=번호 이동)
     async function renderList() {
         const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
         const genre = document.getElementById('genreSelect').value;
@@ -346,14 +386,16 @@
 
         let movies = [];
 
+        // 1. 서버 API를 우선 조회
         try {
             const response = await fetch(`/api/movies?search=${encodeURIComponent(keyword)}&genre=${encodeURIComponent(genre)}&isAdmin=${isAdmin}`);
             if (response.ok) {
                 movies = await response.json();
             } else {
-                throw new Error('API 호출 불가');
+                throw new Error('서버 호출 불가');
             }
         } catch (error) {
+            // 2. 서버 연결 실패 시에만 로컬스토리지 보완
             movies = JSON.parse(localStorage.getItem('myMovies') || '[]');
             if (keyword) {
                 movies = movies.filter(m => m.title && m.title.toLowerCase().includes(keyword));
@@ -369,10 +411,11 @@
         grid.innerHTML = '';
         
         if (!movies || movies.length === 0) {
-            grid.innerHTML = '<div class="empty-msg">등록된 영화 감상평이 없습니다.</div>';
+            grid.innerHTML = '<div class="empty-msg">등록된 영화 감상평이 없습니다. 첫 리뷰를 작성해보세요!</div>';
             return;
         }
 
+        // 최신 감상평 링크 매핑
         const navDetailBtn = document.getElementById('recentDetailNav');
         if (navDetailBtn && movies.length > 0) {
             navDetailBtn.href = `detail.html?id=${movies[0].id}`;
@@ -382,9 +425,11 @@
             const card = document.createElement('div');
             card.className = `movie-card ${m.isHidden ? 'hidden-card' : ''}`;
             
+            // ✅ detail.html?id=번호 로 이동하도록 지정
             card.onclick = () => { window.location.href = `detail.html?id=${m.id}`; };
 
-            const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : '2026. 08. 04';
+            // ✅ 날짜 기본값을 "-" 로 수정 (기존 고정 2026.08.04 제거)
+            const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : '-';
             
             let adminBtnsHtml = '';
             if (isAdmin) {
@@ -395,6 +440,7 @@
                 `;
             }
 
+            // ✅ DB 게시글 영역에만 좋아요 버튼 추가
             card.innerHTML = `
                 <div>
                     <div class="card-header">
@@ -408,12 +454,46 @@
                     <div class="card-content">${m.content || '등록된 감상평이 없습니다.'}</div>
                 </div>
                 <div class="card-footer">
-                    <span>👁️ ${m.views || 0}회 | 👍 ${m.likes || 0}</span>
-                    <span style="color:var(--accent-color); font-weight:bold;">감상평 읽기 &rarr;</span>
+                    <span>👁️ ${m.views || 0}회</span>
+                    <div>
+                        <button class="like-btn" onclick="likeMovie(event, '${m.id}')">👍 <span id="like-count-${m.id}">${m.likes || 0}</span></button>
+                        <span style="color:var(--accent-color); font-weight:bold; margin-left: 8px;">감상평 읽기 &rarr;</span>
+                    </div>
                 </div>
             `;
             grid.appendChild(card);
         });
+    }
+
+    // ✅ 게시글 좋아요 처리
+    async function likeMovie(event, id) {
+        event.stopPropagation();
+        try {
+            const res = await fetch(`/api/movies/${id}/like`, { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                const countElem = document.getElementById(`like-count-${id}`);
+                if (countElem) countElem.innerText = data.likes;
+            } else {
+                likeLocalMovie(id);
+            }
+        } catch (err) {
+            likeLocalMovie(id);
+        }
+    }
+
+    function likeLocalMovie(id) {
+        let localMovies = JSON.parse(localStorage.getItem('myMovies') || '[]');
+        localMovies = localMovies.map(m => {
+            if (m.id == id) {
+                const likes = (m.likes || 0) + 1;
+                const countElem = document.getElementById(`like-count-${id}`);
+                if (countElem) countElem.innerText = likes;
+                return { ...m, likes };
+            }
+            return m;
+        });
+        localStorage.setItem('myMovies', JSON.stringify(localMovies));
     }
 
     async function toggleHideMovie(event, id, currentStatus) {
@@ -487,9 +567,8 @@
     }
 
     window.onload = () => {
-        localStorage.setItem('isAdmin', 'false'); // 초기화
         updateAdminBtn();
-        fetchApiMovies(); // TMDB 인기 영화 자동 조회
+        fetchApiMovies(); 
         renderList();
     };
 </script>
