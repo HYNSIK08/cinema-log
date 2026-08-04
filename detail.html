@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>상세보기 - 시네마 로그</title>
+    <title>시네마 로그 - 상세 페이지</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -11,10 +11,13 @@
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --accent-color: #6c5ce7;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
+            --accent-hover: #5b4bc4;
             --border-color: #334155;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --warning-color: #f59e0b;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding-bottom: 50px; }
 
@@ -25,39 +28,54 @@
         .nav-menu a { color: var(--text-sub); text-decoration: none; font-weight: bold; transition: 0.2s; }
         .nav-menu a:hover, .nav-menu a.active { color: var(--accent-color); }
 
-        .container { max-width: 700px; margin: 40px auto; background: var(--card-bg); padding: 35px; border-radius: 12px; border: 1px solid var(--border-color); }
-        .title-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent-color); padding-bottom: 12px; margin-bottom: 15px; }
-        .title-left { display: flex; align-items: center; gap: 10px; }
-        h2 { color: var(--text-main); font-size: 24px; }
-        .genre-tag { background: var(--accent-color); color: white; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
+        .admin-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: var(--text-sub); cursor: pointer; font-size: 13px; font-weight: bold; }
+        .admin-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
         
-        .bookmark-btn { background: none; border: 1px solid var(--border-color); color: #f1c40f; font-size: 18px; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
-        .bookmark-btn:hover { background: rgba(241, 196, 15, 0.1); }
+        .detail-card { 
+            background-color: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            padding: 30px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
 
-        .info { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: var(--text-sub); display: flex; gap: 20px; border: 1px solid var(--border-color); font-size: 14px; }
-        .content-box { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); line-height: 1.7; min-height: 140px; white-space: pre-wrap; margin-bottom: 25px; }
-
-        .like-section { text-align: center; margin-bottom: 30px; }
-        .btn-like { padding: 10px 24px; background-color: #0f172a; color: #f1c40f; border: 1px solid #f1c40f; border-radius: 20px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
-        .btn-like:hover { background-color: #f1c40f; color: #0f172a; }
-
-        /* 연관 감상평 영역 */
-        .related-section { margin-top: 35px; padding-top: 25px; border-top: 1px solid var(--border-color); }
-        .related-section h3 { font-size: 18px; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        .related-list { display: flex; flex-direction: column; gap: 10px; }
-        .related-item { background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: var(--text-main); transition: 0.2s; }
-        .related-item:hover { border-color: var(--accent-color); transform: translateX(4px); }
-        .related-item .rel-title { font-weight: bold; font-size: 15px; }
-        .related-item .rel-meta { font-size: 12px; color: var(--text-sub); }
-
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 25px; }
-        .btn { padding: 10px 18px; color: white; text-decoration: none; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .btn-list { background-color: #475569; }
-        .btn-edit { background-color: var(--accent-color); }
-        .btn-hide { background-color: var(--warning-color); }
-        .btn-delete { background-color: var(--danger-color); }
+        .detail-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        .detail-title { font-size: 24px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .genre-badge { background: #0f172a; border: 1px solid var(--border-color); color: var(--accent-color); font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
         
-        .admin-only { display: none; }
+        .favorite-btn { background: transparent; border: 1px solid var(--warning-color); color: var(--warning-color); padding: 6px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .favorite-btn:hover { background: var(--warning-color); color: black; }
+
+        .detail-info { background: #0f172a; padding: 12px 20px; border-radius: 8px; margin: 20px 0; display: flex; gap: 20px; font-size: 14px; color: var(--text-sub); border: 1px solid var(--border-color); }
+
+        .detail-content { font-size: 16px; line-height: 1.8; color: var(--text-main); background: #0f172a; padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 180px; white-space: pre-line; word-break: break-all; }
+
+        .like-section { text-align: center; margin: 30px 0; }
+        .like-btn { background: transparent; border: 1px solid var(--warning-color); color: var(--warning-color); padding: 10px 24px; border-radius: 25px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
+        .like-btn:hover { background: var(--warning-color); color: black; }
+
+        .recommend-section { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; }
+        .recommend-title { font-size: 16px; margin-bottom: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .recommend-item { background: #0f172a; border: 1px solid var(--border-color); padding: 12px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .recommend-item:hover { border-color: var(--accent-color); }
+
+        /* 🔘 하단 버튼 컨트롤 영역 */
+        .btn-group { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; }
+        .left-btns, .right-btns { display: flex; gap: 10px; }
+
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; text-decoration: none; display: inline-block; }
+        .btn-secondary { background-color: #334155; color: white; }
+        .btn-secondary:hover { background-color: #475569; }
+        
+        .btn-primary { background-color: var(--accent-color); color: white; }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+
+        .btn-warning { background-color: var(--warning-color); color: black; }
     </style>
 </head>
 <body>
@@ -71,96 +89,113 @@
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
     </div>
+    <div>
+        <button id="adminToggleBtn" class="admin-btn" onclick="toggleAdmin()">🔒 관리자 로그인</button>
+    </div>
 </nav>
 
 <div class="container">
-    <div class="title-area">
-        <div class="title-left">
-            <h2 id="movieTitle">로딩 중...</h2>
-            <span class="genre-tag" id="movieGenre">-</span>
+    <div class="detail-card">
+        <div class="detail-header">
+            <div class="detail-title">
+                <span id="movieTitle">로딩 중...</span>
+                <span class="genre-badge" id="movieGenre">-</span>
+            </div>
+            <button class="favorite-btn" onclick="alert('즐겨찾기에 추가되었습니다.')">☆ 즐겨찾기</button>
         </div>
-        <button id="bookmarkBtn" class="bookmark-btn" onclick="toggleBookmark()">☆ 즐겨찾기</button>
-    </div>
-    
-    <div class="info">
-        <div>✍️ 작성자: <span id="movieWriter" style="color:var(--text-main);"></span></div>
-        <div>👁️ 조회수: <span id="movieViews" style="color:var(--text-main);">0</span></div>
-        <div>👍 추천수: <span id="movieLikes" style="color:var(--text-main);">0</span></div>
-    </div>
-    
-    <div class="content-box" id="movieContent"></div>
 
-    <div class="like-section">
-        <button type="button" class="btn-like" onclick="likeMovie()">👍 이 감상평 추천하기</button>
-    </div>
-
-    <!-- 같은 영화/같은 장르 연관 감상평 영역 -->
-    <div class="related-section">
-        <h3>🎬 관련 영화/장르 추천 기록</h3>
-        <div class="related-list" id="relatedList">
-            <div style="color:var(--text-sub); font-size:14px;">연관 기록을 불러오는 중...</div>
+        <div class="detail-info">
+            <span>✍️ 작성자: <strong id="movieWriter" style="color:var(--text-main);">-</strong></span>
+            <span>👁️ 조회수: <strong id="movieViews" style="color:var(--text-main);">0</strong></span>
+            <span>👍 추천수: <strong id="movieLikes" style="color:var(--text-main);">0</strong></span>
         </div>
-    </div>
 
-    <div class="btn-group">
-        <a href="index.html" class="btn btn-list">목록으로</a>
-        <a id="editBtn" class="btn btn-edit">수정</a>
-        
-        <button type="button" id="hideBtn" class="btn btn-hide admin-only" onclick="toggleHide()"></button>
-        <button type="button" class="btn btn-delete admin-only" onclick="deleteMovie()">삭제 (관리자)</button>
+        <div class="detail-content" id="movieContent">
+            감상평 내용을 불러오는 중입니다...
+        </div>
+
+        <div class="like-section">
+            <button class="like-btn" onclick="likeMovie()">👍 이 감상평 추천하기</button>
+        </div>
+
+        <!-- 관련 영화/장르 추천 -->
+        <div class="recommend-section">
+            <div class="recommend-title">🎬 관련 영화/장르 추천 기록</div>
+            <div class="recommend-item" id="recommendBox">
+                <span>동일 장르의 다른 추천글을 불러오는 중...</span>
+            </div>
+        </div>
+
+        <!-- 🔘 하단 버튼 그룹 (목록, 수정, 삭제, 숨김) -->
+        <div class="btn-group">
+            <div class="left-btns">
+                <a href="index.html" class="btn btn-secondary">목록으로</a>
+            </div>
+            <div class="right-btns">
+                <!-- 관리자용 숨김 버튼 (관리자일 때만 표시) -->
+                <button type="button" id="hideBtn" class="btn btn-warning" style="display: none;" onclick="toggleHide()"></button>
+                <button type="button" class="btn btn-primary" onclick="goEdit()">수정</button>
+                <button type="button" class="btn btn-danger" onclick="deleteMovie()">삭제</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const movieId = urlParams.get('id');
-    let currentIsHidden = 0;
     let currentMovie = null;
 
     function checkAdmin() {
         return localStorage.getItem('isAdmin') === 'true';
     }
 
-    // 즐겨찾기 목록 불러오기 (localStorage 활용)
-    function getBookmarks() {
-        return JSON.parse(localStorage.getItem('cinema_bookmarks') || '[]');
-    }
-
-    // 즐겨찾기 버튼 상태 업데이트
-    function updateBookmarkBtn() {
-        const bookmarks = getBookmarks();
-        const btn = document.getElementById('bookmarkBtn');
-        if (bookmarks.includes(String(movieId))) {
-            btn.innerText = '★ 즐겨찾기됨';
-            btn.style.borderColor = '#f1c40f';
-            btn.style.background = 'rgba(241, 196, 15, 0.2)';
+    function updateAdminBtn() {
+        const btn = document.getElementById('adminToggleBtn');
+        if (checkAdmin()) {
+            btn.innerText = "🔓 관리자 로그아웃";
+            btn.classList.add('active');
         } else {
-            btn.innerText = '☆ 즐겨찾기';
-            btn.style.borderColor = 'var(--border-color)';
-            btn.style.background = 'none';
+            btn.innerText = "🔒 관리자 로그인";
+            btn.classList.remove('active');
         }
     }
 
-    // 즐겨찾기 토글
-    function toggleBookmark() {
-        if (!movieId) return;
-        let bookmarks = getBookmarks();
-        const strId = String(movieId);
-        
-        if (bookmarks.includes(strId)) {
-            bookmarks = bookmarks.filter(id => id !== strId);
-            alert('즐겨찾기에서 해제되었습니다.');
+    async function toggleAdmin() {
+        if (checkAdmin()) {
+            localStorage.setItem('isAdmin', 'false');
+            alert('관리자 모드에서 로그아웃했습니다.');
+            location.reload();
         } else {
-            bookmarks.push(strId);
-            alert('즐겨찾기에 추가되었습니다!');
+            const inputId = prompt("관리자 아이디를 입력하세요:");
+            if (inputId === null) return;
+            const inputPw = prompt("관리자 비밀번호를 입력하세요:");
+            if (inputPw === null) return;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: inputId.trim(), password: inputPw.trim() })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    localStorage.setItem('isAdmin', 'true');
+                    alert('관리자 로그인 성공!');
+                    location.reload();
+                } else {
+                    alert(result.message || '로그인 실패');
+                }
+            } catch (error) {
+                alert('서버와 통신할 수 없습니다.');
+            }
         }
-        
-        localStorage.setItem('cinema_bookmarks', JSON.stringify(bookmarks));
-        updateBookmarkBtn();
     }
 
-    // 상세페이지 데이터 로드
-    async function loadDetail() {
+    // 📄 1. 게시글 상세 정보 불러오기
+    async function loadMovieDetail() {
         if (!movieId) {
             alert('잘못된 접근입니다.');
             window.location.href = 'index.html';
@@ -168,131 +203,124 @@
         }
 
         try {
-            const response = await fetch(`/api/movies/${movieId}`);
-            if (response.ok) {
-                currentMovie = await response.json();
-                
-                document.getElementById('movieTitle').innerText = currentMovie.title;
-                document.getElementById('movieGenre').innerText = currentMovie.genre || '기타';
-                document.getElementById('movieWriter').innerText = currentMovie.writer;
-                document.getElementById('movieViews').innerText = currentMovie.views;
-                document.getElementById('movieLikes').innerText = currentMovie.likes || 0;
-                document.getElementById('movieContent').innerText = currentMovie.content;
-                document.getElementById('editBtn').href = `editForm.html?id=${currentMovie.id}`;
-                
-                currentIsHidden = currentMovie.isHidden;
+            const res = await fetch(`/api/movies/${movieId}`);
+            if (!res.ok) throw new Error('게시글을 찾을 수 없습니다.');
+
+            currentMovie = await res.json();
+
+            document.getElementById('movieTitle').innerText = currentMovie.title;
+            document.getElementById('movieGenre').innerText = currentMovie.genre || '기타';
+            document.getElementById('movieWriter').innerText = currentMovie.writer;
+            document.getElementById('movieViews').innerText = currentMovie.views;
+            document.getElementById('movieLikes').innerText = currentMovie.likes || 0;
+            document.getElementById('movieContent').innerText = currentMovie.content;
+
+            // 관리자일 경우 숨김 버튼 제어
+            if (checkAdmin()) {
                 const hideBtn = document.getElementById('hideBtn');
-                hideBtn.innerText = currentIsHidden ? "숨김 해제 (관리자)" : "게시글 숨기기 (관리자)";
-
-                if (checkAdmin()) {
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
-                }
-
-                updateBookmarkBtn();
-                loadRelatedMovies(currentMovie.title, currentMovie.genre, currentMovie.id);
-            } else {
-                alert('해당 감상평을 찾을 수 없습니다.');
-                window.location.href = 'index.html';
+                hideBtn.style.display = 'inline-block';
+                hideBtn.innerText = currentMovie.isHidden ? '🔓 숨김 해제' : '🙈 숨김 처리';
             }
-        } catch (error) {
-            console.error('로드 실패:', error);
-        }
-    }
 
-    // 동일한 영화 제목 또는 장르를 공유하는 연관 글 찾기
-    async function loadRelatedMovies(title, genre, currentId) {
-        const relatedListEl = document.getElementById('relatedList');
-        try {
-            const res = await fetch(`/api/movies?isAdmin=${checkAdmin()}`);
-            if (res.ok) {
-                const allMovies = await res.json();
-                
-                // 현재 글 제외 + 제목이 같거나 장르가 같은 글 필터링
-                const related = allMovies.filter(m => 
-                    String(m.id) !== String(currentId) && 
-                    (m.title === title || (genre && m.genre === genre))
-                );
+            // 추천 연관 게시글 로드
+            loadRelatedMovie(currentMovie.genre, currentMovie.id);
 
-                relatedListEl.innerHTML = '';
-                if (related.length === 0) {
-                    relatedListEl.innerHTML = '<div style="color:var(--text-sub); font-size:14px;">연관된 다른 감상평이 없습니다.</div>';
-                    return;
-                }
-
-                related.slice(0, 5).forEach(item => {
-                    const matchType = item.title === title ? '🎬 동일 제목' : '🏷️ 동일 장르';
-                    const a = document.createElement('a');
-                    a.className = 'related-item';
-                    a.href = `detail.html?id=${item.id}`;
-                    a.innerHTML = `
-                        <div>
-                            <span class="rel-title">${item.title}</span> 
-                            <span style="font-size:12px; color:var(--accent-color); margin-left:6px;">[${matchType}]</span>
-                        </div>
-                        <div class="rel-meta">✍️ ${item.writer} | 👍 ${item.likes || 0}</div>
-                    `;
-                    relatedListEl.appendChild(a);
-                });
-            }
         } catch (err) {
-            console.error('연관 글 로드 실패:', err);
-            relatedListEl.innerHTML = '<div style="color:var(--text-sub); font-size:14px;">연관 글을 불러오지 못했습니다.</div>';
+            alert(err.message);
+            window.location.href = 'index.html';
         }
     }
 
-    // 추천(좋아요) 처리
+    // 👍 2. 추천하기 기능
     async function likeMovie() {
         try {
-            const response = await fetch(`/api/movies/${movieId}/like`, { method: 'POST' });
-            if (response.ok) {
-                const data = await response.json();
-                document.getElementById('movieLikes').innerText = data.likes;
-                alert('추천되었습니다!');
-            }
-        } catch (error) {
-            console.error('추천 실패:', error);
+            const res = await fetch(`/api/movies/${movieId}/like`, { method: 'POST' });
+            const data = await res.json();
+            document.getElementById('movieLikes').innerText = data.likes;
+            alert('이 감상평을 추천했습니다! 👍');
+        } catch (err) {
+            alert('추천 처리 중 오류가 발생했습니다.');
         }
     }
 
-    async function toggleHide() {
-        if (!checkAdmin()) return alert('관리자 권한이 필요합니다.');
-        const targetState = currentIsHidden ? 0 : 1;
+    // ✏️ 3. 수정 페이지 이동
+    function goEdit() {
+        window.location.href = `addForm.html?id=${movieId}`;
+    }
+
+    // 🗑️ 4. 삭제 기능 (신규 추가!)
+    async function deleteMovie() {
+        if (!confirm('정말로 이 영화 감상평을 삭제하시겠습니까?')) {
+            return;
+        }
+
         try {
-            const response = await fetch(`/api/movies/${movieId}/hide`, {
+            const res = await fetch(`/api/movies/${movieId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert('감상평이 삭제되었습니다.');
+                window.location.href = 'index.html'; // 삭제 완료 후 메인 페이지 이동
+            } else {
+                alert(data.error || '삭제 실패');
+            }
+        } catch (err) {
+            console.error('삭제 요청 중 오류:', err);
+            alert('삭제 처리 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 🙈 5. 숨김 처리 toggle 기능
+    async function toggleHide() {
+        const newStatus = currentMovie.isHidden ? 0 : 1;
+        try {
+            const res = await fetch(`/api/movies/${movieId}/hide`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isHidden: targetState })
+                body: JSON.stringify({ isHidden: newStatus })
             });
-            if (response.ok) {
-                alert(targetState ? '게시글이 숨김 처리되었습니다.' : '게시글 숨김이 해제되었습니다.');
+
+            if (res.ok) {
+                alert(newStatus ? '게시글이 숨김 처리되었습니다.' : '숨김이 해제되었습니다.');
                 location.reload();
+            } else {
+                alert('숨김 변경 실패');
             }
-        } catch (error) {
-            console.error('숨김 처리 실패:', error);
+        } catch (err) {
+            alert('오류 발생');
         }
     }
 
-    async function deleteMovie() {
-        if (!checkAdmin()) return alert('관리자 권한이 필요합니다.');
-        if (confirm("정말로 이 기록을 삭제하시겠습니까?")) {
-            const response = await fetch(`/api/movies/${movieId}`, { method: 'DELETE' });
-            if (response.ok) {
-                alert("삭제되었습니다.");
-                window.location.href = "index.html";
+    // 🎬 연관 장르 글 가져오기
+    async function loadRelatedMovie(genre, currentId) {
+        try {
+            const res = await fetch(`/api/movies?genre=${encodeURIComponent(genre)}&isAdmin=${checkAdmin()}`);
+            const movies = await res.json();
+            const filtered = movies.filter(m => m.id != currentId);
+
+            const box = document.getElementById('recommendBox');
+            if (filtered.length > 0) {
+                const rel = filtered[0];
+                box.innerHTML = `
+                    <span><strong>${rel.title}</strong> <small style="color:var(--accent-color);">[ 동일 장르 ]</small></span>
+                    <span>✍️ ${rel.writer} | 👍 ${rel.likes || 0}</span>
+                `;
+                box.onclick = () => { window.location.href = `detail.html?id=${rel.id}`; };
+            } else {
+                box.innerHTML = `<span>추천할 동일 장르의 다른 글이 없습니다.</span>`;
             }
+        } catch (err) {
+            console.error(err);
         }
     }
-    <div class="btn-group">
-        <a href="index.html" class="btn btn-list">목록으로</a>
-        <a id="editBtn" class="btn btn-edit">수정</a>
-        <button type="button" id="hideBtn" class="btn btn-hide admin-only" onclick="toggleHide()"></button>
-        <button type="button" class="btn btn-delete admin-only" onclick="deleteMovie()">삭제 (관리자)</button>
-    </div>
-    
 
-    window.onload = loadDetail;
-    
+    window.onload = () => {
+        updateAdminBtn();
+        loadMovieDetail();
+    };
 </script>
-<script src="detail.js"></script>
 </body>
 </html>

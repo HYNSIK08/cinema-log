@@ -34,16 +34,24 @@
         .hero-banner h1 { color: var(--text-main); margin-bottom: 10px; font-size: 26px; }
         .hero-banner p { color: var(--text-sub); font-size: 15px; }
 
-        /* 외부 영화 API 트렌드 가로 스크롤 섹션 */
-        .api-section { margin-bottom: 40px; }
-        .api-section h2 { font-size: 20px; margin-bottom: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        /* 외부 영화 API 트렌드 및 실시간 검색 가로 스크롤 섹션 */
+        .api-section { margin-bottom: 40px; background: rgba(30, 41, 59, 0.4); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .api-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .api-header h2 { font-size: 20px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        
+        .api-search-box { display: flex; gap: 8px; }
+        .api-search-box input { padding: 8px 12px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); outline: none; font-size: 14px; }
+        .api-search-box input:focus { border-color: var(--accent-color); }
+        .api-search-box button { padding: 8px 14px; background: var(--accent-color); border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .api-search-box button:hover { background-color: var(--accent-hover); }
+
         .api-movie-list { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: thin; scrollbar-color: var(--accent-color) var(--card-bg); }
-        .api-movie-card { min-width: 150px; max-width: 150px; background: var(--card-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s; flex-shrink: 0; }
+        .api-movie-card { min-width: 150px; max-width: 150px; background: var(--card-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s, border-color 0.2s; flex-shrink: 0; }
         .api-movie-card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
-        .api-movie-card img { width: 100%; height: 210px; object-fit: cover; }
+        .api-movie-card img { width: 100%; height: 210px; object-fit: cover; background: #0f172a; }
         .api-movie-info { padding: 10px; }
-        .api-movie-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .api-movie-vote { font-size: 12px; color: #f1c40f; margin-top: 4px; }
+        .api-movie-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+        .api-movie-vote { font-size: 12px; color: #f1c40f; margin-top: 4px; font-weight: bold; }
 
         /* 검색 및 필터 영역 */
         .search-box { margin-bottom: 30px; display: flex; gap: 10px; }
@@ -119,9 +127,16 @@
         <p>장르별 검색, 추천 기능 및 자유로운 감상평 다크 갤러리</p>
     </div>
 
-    <!-- 🌟 실시간 영화 API 추천 영역 -->
+    <!-- 🌟 실시간 영화 API 트렌드 및 검색 영역 -->
     <div class="api-section">
-        <h2>🔥 실시간 인기 트렌드 영화 (클릭 시 리뷰 작성)</h2>
+        <div class="api-header">
+            <h2 id="apiSectionTitle">🔥 실시간 인기 트렌드 영화 (클릭 시 리뷰 작성)</h2>
+            <div class="api-search-box">
+                <input type="text" id="apiSearchInput" placeholder="영화 제목 검색..." onkeyup="if(event.key==='Enter') searchApiMovies()">
+                <button type="button" onclick="searchApiMovies()">검색</button>
+                <button type="button" onclick="fetchApiMovies()" style="background:#334155;">인기순</button>
+            </div>
+        </div>
         <div class="api-movie-list" id="apiMovieList">
             <div style="color:var(--text-sub); font-size:14px;">영화 데이터 불러오는 중...</div>
         </div>
@@ -146,79 +161,94 @@
 </div>
 
 <script>
-    // 관리자 계정 정보
-    const ADMIN_ID = "hyunsik";
-    const ADMIN_PW = "7356";
+    const TMDB_API_KEY = 'f97987814400762f02f8373b5a1b32d2';
 
-
-function checkAdmin() {
-    return localStorage.getItem('isAdmin') === 'true';
-}
-
-function updateAdminBtn() {
-    const btn = document.getElementById('adminToggleBtn');
-    if (checkAdmin()) {
-        btn.innerText = "🔓 관리자 로그아웃";
-        btn.classList.add('active');
-    } else {
-        btn.innerText = "🔒 관리자 로그인";
-        btn.classList.remove('active');
+    function checkAdmin() {
+        return localStorage.getItem('isAdmin') === 'true';
     }
-}
 
-// 🔒 백엔드(server.js)에 인증 요청을 보내는 방식으로 변경
-async function toggleAdmin() {
-    if (checkAdmin()) {
-        localStorage.setItem('isAdmin', 'false');
-        alert('관리자 모드에서 로그아웃했습니다.');
-        updateAdminBtn();
-        renderList();
-    } else {
-        const inputId = prompt("관리자 아이디를 입력하세요:");
-        if (inputId === null) return;
-
-        const inputPw = prompt("관리자 비밀번호를 입력하세요:");
-        if (inputPw === null) return;
-
-        try {
-            // 서버의 /api/login 으로 ID와 비밀번호를 전송하여 검증
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: inputId.trim(), password: inputPw.trim() })
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                localStorage.setItem('isAdmin', 'true');
-                alert('관리자 로그인에 성공했습니다!');
-                updateAdminBtn();
-                renderList();
-            } else {
-                alert(result.message || '로그인에 실패했습니다.');
-                localStorage.setItem('isAdmin', 'false');
-            }
-        } catch (error) {
-            console.error('로그인 요청 중 오류 발생:', error);
-            alert('서버와 통신할 수 없습니다. server.js가 실행 중인지 확인하세요.');
+    function updateAdminBtn() {
+        const btn = document.getElementById('adminToggleBtn');
+        if (checkAdmin()) {
+            btn.innerText = "🔓 관리자 로그아웃";
+            btn.classList.add('active');
+        } else {
+            btn.innerText = "🔒 관리자 로그인";
+            btn.classList.remove('active');
         }
     }
-}
 
-    // 🎬 외부 오픈 영화 API(TMDB 트렌드 API) 가져오기
+    // 🔒 백엔드(server.js)에 인증 요청을 보내는 방식
+    async function toggleAdmin() {
+        if (checkAdmin()) {
+            localStorage.setItem('isAdmin', 'false');
+            alert('관리자 모드에서 로그아웃했습니다.');
+            updateAdminBtn();
+            renderList();
+        } else {
+            const inputId = prompt("관리자 아이디를 입력하세요:");
+            if (inputId === null) return;
+
+            const inputPw = prompt("관리자 비밀번호를 입력하세요:");
+            if (inputPw === null) return;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: inputId.trim(), password: inputPw.trim() })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    localStorage.setItem('isAdmin', 'true');
+                    alert('관리자 로그인에 성공했습니다!');
+                    updateAdminBtn();
+                    renderList();
+                } else {
+                    alert(result.message || '로그인에 실패했습니다.');
+                    localStorage.setItem('isAdmin', 'false');
+                }
+            } catch (error) {
+                console.error('로그인 요청 중 오류 발생:', error);
+                alert('서버와 통신할 수 없습니다. server.js가 실행 중인지 확인하세요.');
+            }
+        }
+    }
+
+    // 🎬 1. 외부 영화 API 인기 목록 불러오기
     async function fetchApiMovies() {
+        document.getElementById('apiSectionTitle').innerText = "🔥 실시간 인기 트렌드 영화 (클릭 시 리뷰 작성)";
+        const url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`;
+        await renderApiMovies(url);
+    }
+
+    // 🎬 2. 실시간 영화 제목 검색 API 호출
+    async function searchApiMovies() {
+        const query = document.getElementById('apiSearchInput').value.trim();
+        if (!query) {
+            alert('검색할 영화 제목을 입력해주세요!');
+            return;
+        }
+        document.getElementById('apiSectionTitle').innerText = `🔍 '${query}' 실시간 검색 결과 (클릭 시 리뷰 작성)`;
+        const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(query)}&page=1`;
+        await renderApiMovies(url);
+    }
+
+    // 🎬 3. 영화 API 공통 Fetch 및 UI 출력 함수
+    async function renderApiMovies(url) {
         const apiContainer = document.getElementById('apiMovieList');
+        apiContainer.innerHTML = '<div style="color:var(--text-sub); font-size:14px;">영화 데이터 불러오는 중...</div>';
+
         try {
-            // TMDB 오픈 인기 영화 API 호출 (무료 오픈 키 적용)
-            const apiKey = '0d350c3bc63bc05e2ed3e2bf57be28cb';
-            const res = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=ko-KR&page=1`);
+            const res = await fetch(url);
             const data = await res.json();
             
             apiContainer.innerHTML = '';
             
             if (data.results && data.results.length > 0) {
-                data.results.slice(0, 10).forEach(movie => {
+                data.results.forEach(movie => {
                     const card = document.createElement('div');
                     card.className = 'api-movie-card';
                     
@@ -226,11 +256,13 @@ async function toggleAdmin() {
                         ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` 
                         : 'https://via.placeholder.com/150x210?text=No+Image';
 
+                    const voteAvg = movie.vote_average ? movie.vote_average.toFixed(1) : '0.0';
+
                     card.innerHTML = `
-                        <img src="${posterUrl}" alt="${movie.title}">
+                        <img src="${posterUrl}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/150x210?text=No+Image'">
                         <div class="api-movie-info">
                             <div class="api-movie-title" title="${movie.title}">${movie.title}</div>
-                            <div class="api-movie-vote">★ ${movie.vote_average.toFixed(1)}</div>
+                            <div class="api-movie-vote">★ ${voteAvg}</div>
                         </div>
                     `;
 
@@ -242,11 +274,11 @@ async function toggleAdmin() {
                     apiContainer.appendChild(card);
                 });
             } else {
-                apiContainer.innerHTML = '<div style="color:var(--text-sub);">영화 추천 정보를 가져올 수 없습니다.</div>';
+                apiContainer.innerHTML = '<div style="color:var(--text-sub); font-size:14px; padding:10px;">검색 결과가 없습니다.</div>';
             }
         } catch (err) {
             console.error("영화 API 데이터 로드 오류:", err);
-            apiContainer.innerHTML = '<div style="color:var(--text-sub);">영화 API 로드 실패</div>';
+            apiContainer.innerHTML = '<div style="color:var(--text-sub); font-size:14px; padding:10px;">영화 API 로드 실패</div>';
         }
     }
 
@@ -331,7 +363,7 @@ async function toggleAdmin() {
 
     window.onload = () => {
         updateAdminBtn();
-        fetchApiMovies(); // 실시간 인기 영화 API 연동 호출
+        fetchApiMovies(); // 실시간 인기 영화 API 연동 로드
         renderList();
         initDetailMenu();
     };
