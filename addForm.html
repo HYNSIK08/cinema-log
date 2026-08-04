@@ -61,7 +61,7 @@
 
 <script>
     // ⏰ 10시간 쿨타임 설정 (10시간 * 60분 * 60초 * 1000밀리초 = 36,000,000 ms)
-    const COOL_TIME_MS = 10 * 60 * 60 * 1000; 
+    const COOL_TIME_MS = 10 * 60 * 1000; 
 
     async function submitReview(event) {
         event.preventDefault();
@@ -76,9 +76,9 @@
             if (timePassed < COOL_TIME_MS) {
                 const remainMs = COOL_TIME_MS - timePassed;
                 
-                const hours = Math.floor(remainMs / (1000 * 60 * 60));
-                const minutes = Math.floor((remainMs % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((remainMs % (1000 * 60)) / 1000);
+                const hours = Math.floor(remainMs / (100* 60));
+                const minutes = Math.floor((remainMs % (100* 60)) / (100 * 60));
+                const seconds = Math.floor((remainMs % (100 * 60)) / 100);
 
                 alert(`🚫 도배 방지: 감상평은 10시간에 한 번만 작성할 수 있습니다.\n\n남은 시간: ${hours}시간 ${minutes}분 ${seconds}초`);
                 return;
