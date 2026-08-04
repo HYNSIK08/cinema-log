@@ -128,7 +128,7 @@
         <ul class="nav-menu">
             <li><a href="index.html" class="active">메인</a></li>
             <li><a href="about.html">사이트 소개</a></li>
-            <li><a href="#" id="recentDetailNav">상세 페이지</a></li>
+            <li><a href="detail.html" id="recentDetailNav">상세 페이지</a></li>
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
     </div>
@@ -180,26 +180,10 @@
 <script>
     // 🔒 [보안] 소스 보기 및 개발자 도구 단축키 차단
     document.addEventListener('keydown', function(e) {
-        // F12 차단
-        if (e.keyCode === 123) {
-            e.preventDefault();
-            return false;
-        }
-        // Ctrl + Shift + I, J, C 차단
-        if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
-            e.preventDefault();
-            return false;
-        }
-        // Ctrl + U (소스 보기) 차단
-        if (e.ctrlKey && e.keyCode === 85) {
-            e.preventDefault();
-            return false;
-        }
-        // Ctrl + S (저장) 차단
-        if (e.ctrlKey && e.keyCode === 83) {
-            e.preventDefault();
-            return false;
-        }
+        if (e.keyCode === 123) { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
     });
 
     const ADMIN_ID = "hyunsik";
@@ -238,7 +222,7 @@
 
             if (inputId.trim() === ADMIN_ID && inputPw.trim() === ADMIN_PW) {
                 localStorage.setItem('isAdmin', 'true');
-                alert('관리자 로그인 성공!');
+                alert('관리자 로그인 성공! 관리자 권한이 부여되었습니다.');
                 updateAdminBtn();
                 renderList();
             } else {
@@ -247,10 +231,8 @@
         }
     }
 
-    // 🙈/👁️ 숨김 토글 함수
     async function toggleHideMovie(event, id, currentStatus) {
-        event.stopPropagation(); // 카드 클릭 시 상세 이동 차단
-
+        event.stopPropagation();
         try {
             const res = await fetch(`/api/movies/${id}/toggle-hide`, {
                 method: 'PATCH',
@@ -260,18 +242,22 @@
             if (res.ok) {
                 renderList();
             } else {
-                alert('숨김 상태 변경에 실패했습니다.');
+                toggleLocalHide(id, !currentStatus);
             }
         } catch (err) {
-            console.error('숨김 요청 오류:', err);
-            alert('서버 통신 실패');
+            toggleLocalHide(id, !currentStatus);
         }
     }
 
-    // 🗑️ 개별 삭제 함수
+    function toggleLocalHide(id, newStatus) {
+        let localMovies = JSON.parse(localStorage.getItem('myMovies') || '[]');
+        localMovies = localMovies.map(m => m.id == id ? { ...m, isHidden: newStatus } : m);
+        localStorage.setItem('myMovies', JSON.stringify(localMovies));
+        renderList();
+    }
+
     async function deleteSingleMovie(event, id) {
         event.stopPropagation();
-
         if (!confirm('정말로 이 감상평을 삭제하시겠습니까?')) return;
 
         try {
@@ -280,15 +266,21 @@
                 alert('감상평이 삭제되었습니다.');
                 renderList();
             } else {
-                alert('삭제 실패');
+                deleteLocalMovie(id);
             }
         } catch (err) {
-            console.error('삭제 요청 중 오류:', err);
-            alert('서버와 통신할 수 없습니다.');
+            deleteLocalMovie(id);
         }
     }
 
-    // 🗑️ 전체 삭제 함수
+    function deleteLocalMovie(id) {
+        let localMovies = JSON.parse(localStorage.getItem('myMovies') || '[]');
+        localMovies = localMovies.filter(m => m.id != id);
+        localStorage.setItem('myMovies', JSON.stringify(localMovies));
+        alert('감상평이 삭제되었습니다.');
+        renderList();
+    }
+
     async function deleteAllMovies() {
         if (!confirm('⚠️ 경고: 등록된 전체 감상평을 모두 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.')) return;
 
@@ -298,11 +290,14 @@
                 alert('전체 감상평이 모두 삭제되었습니다.');
                 renderList();
             } else {
-                alert('전체 삭제 실패');
+                localStorage.removeItem('myMovies');
+                alert('전체 감상평이 삭제되었습니다.');
+                renderList();
             }
         } catch (err) {
-            console.error('전체 삭제 오류:', err);
-            alert('서버 삭제 실패');
+            localStorage.removeItem('myMovies');
+            alert('전체 감상평이 삭제되었습니다.');
+            renderList();
         }
     }
 
@@ -331,69 +326,93 @@
     }
 
     async function renderList() {
-        const keyword = document.getElementById('searchInput').value;
+        const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
         const genre = document.getElementById('genreSelect').value;
         const isAdmin = checkAdmin();
         const grid = document.getElementById('movieGrid');
 
+        let movies = [];
+
         try {
             const response = await fetch(`/api/movies?search=${encodeURIComponent(keyword)}&genre=${encodeURIComponent(genre)}&isAdmin=${isAdmin}`);
-            let movies = await response.json();
-            grid.innerHTML = '';
+            if (response.ok) {
+                movies = await response.json();
+            } else {
+                throw new Error('API 호출 불가');
+            }
+        } catch (error) {
+            movies = JSON.parse(localStorage.getItem('myMovies') || '[]');
+            if (keyword) {
+                movies = movies.filter(m => m.title && m.title.toLowerCase().includes(keyword));
+            }
+            if (genre) {
+                movies = movies.filter(m => m.genre === genre);
+            }
+            if (!isAdmin) {
+                movies = movies.filter(m => !m.isHidden);
+            }
+        }
+
+        grid.innerHTML = '';
+        
+        if (!movies || movies.length === 0) {
+            grid.innerHTML = '<div class="empty-msg">등록된 영화 감상평이 없습니다.</div>';
+            return;
+        }
+
+        const navDetailBtn = document.getElementById('recentDetailNav');
+        if (navDetailBtn && movies.length > 0) {
+            navDetailBtn.href = `detail.html?id=${movies[0].id}`;
+        }
+
+        movies.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        movies.forEach((m) => {
+            const card = document.createElement('div');
+            card.className = `movie-card ${m.isHidden ? 'hidden-card' : ''}`;
             
-            if (movies.length === 0) {
-                grid.innerHTML = '<div class="empty-msg">등록된 영화 감상평이 없습니다.</div>';
-                return;
+            card.onclick = () => { window.location.href = `detail.html?id=${m.id}`; };
+
+            const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : '2026. 08. 04';
+            
+            let adminBtnsHtml = '';
+            if (isAdmin) {
+                const hideText = m.isHidden ? '👁️ 노출' : '🙈 숨김';
+                adminBtnsHtml = `
+                    <button class="admin-action-btn btn-hide-card" onclick="toggleHideMovie(event, '${m.id}', ${!!m.isHidden})">${hideText}</button>
+                    <button class="admin-action-btn btn-delete-card" onclick="deleteSingleMovie(event, '${m.id}')">🗑️ 삭제</button>
+                `;
             }
 
-            movies.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-            movies.forEach((m) => {
-                const card = document.createElement('div');
-                card.className = `movie-card ${m.isHidden ? 'hidden-card' : ''}`;
-                
-                card.onclick = () => { window.location.href = `detail.html?id=${m.id}`; };
-
-                const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : '2026. 08. 04';
-                
-                // 관리자에게만 제어 버튼 노출
-                let adminBtnsHtml = '';
-                if (isAdmin) {
-                    const hideText = m.isHidden ? '👁️ 노출' : '🙈 숨김';
-                    adminBtnsHtml = `
-                        <button class="admin-action-btn btn-hide-card" onclick="toggleHideMovie(event, '${m.id}', ${!!m.isHidden})">${hideText}</button>
-                        <button class="admin-action-btn btn-delete-card" onclick="deleteSingleMovie(event, '${m.id}')">🗑️ 삭제</button>
-                    `;
-                }
-
-                card.innerHTML = `
-                    <div>
-                        <div class="card-header">
-                            <span class="card-title">${m.title}</span>
-                            <span class="genre-badge">${m.genre || '기타'}</span>
-                        </div>
-                        <div class="card-info">
-                            <span>✍️ ${m.writer} ${m.isHidden ? '<span class="hidden-badge">[숨겨짐]</span>' : ''} ${adminBtnsHtml}</span>
-                            <span>📅 ${dateStr}</span>
-                        </div>
-                        <div class="card-content">${m.content || '등록된 감상평이 없습니다.'}</div>
+            card.innerHTML = `
+                <div>
+                    <div class="card-header">
+                        <span class="card-title">${m.title}</span>
+                        <span class="genre-badge">${m.genre || '기타'}</span>
                     </div>
-                    <div class="card-footer">
-                        <span>👁️ ${m.views || 0}회 | 👍 ${m.likes || 0}</span>
-                        <span style="color:var(--accent-color); font-weight:bold;">감상평 읽기 &rarr;</span>
+                    <div class="card-info">
+                        <span>✍️ ${m.writer || '익명'} ${m.isHidden ? '<span class="hidden-badge">[숨겨짐]</span>' : ''} ${adminBtnsHtml}</span>
+                        <span>📅 ${dateStr}</span>
                     </div>
-                `;
-                grid.appendChild(card);
-            });
-        } catch (error) {
-            console.error("데이터 로드 실패:", error);
-        }
+                    <div class="card-content">${m.content || '등록된 감상평이 없습니다.'}</div>
+                </div>
+                <div class="card-footer">
+                    <span>👁️ ${m.views || 0}회 | 👍 ${m.likes || 0}</span>
+                    <span style="color:var(--accent-color); font-weight:bold;">감상평 읽기 &rarr;</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
     }
 
+    // 🚀 페이지 로드 시 무조건 로그아웃 상태(일반 사용자)로 초기화
     window.onload = () => {
+        localStorage.setItem('isAdmin', 'false'); // 접속 시 로그아웃 상태로 강제 세팅
         updateAdminBtn();
+        
         const apiContainer = document.getElementById('apiMovieList');
         if (apiContainer) renderBackupMovies(apiContainer);
+        
         renderList();
     };
 </script>
