@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시네마 로그 - 상세 페이지</title>
+    <title>시네마 로그 - 즐겨찾기 감상평 상세</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -46,7 +46,7 @@
         .genre-badge { background: #0f172a; border: 1px solid var(--border-color); color: var(--accent-color); font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
         
         .favorite-btn { background: transparent; border: 1px solid var(--warning-color); color: var(--warning-color); padding: 6px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .favorite-btn:hover { background: var(--warning-color); color: black; }
+        .favorite-btn.active { background: var(--warning-color); color: black; }
 
         .detail-info { background: #0f172a; padding: 12px 20px; border-radius: 8px; margin: 20px 0; display: flex; gap: 20px; font-size: 14px; color: var(--text-sub); border: 1px solid var(--border-color); }
 
@@ -56,12 +56,10 @@
         .like-btn { background: transparent; border: 1px solid var(--warning-color); color: var(--warning-color); padding: 10px 24px; border-radius: 25px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
         .like-btn:hover { background: var(--warning-color); color: black; }
 
-        .recommend-section { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; }
-        .recommend-title { font-size: 16px; margin-bottom: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-        .recommend-item { background: #0f172a; border: 1px solid var(--border-color); padding: 12px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .recommend-item:hover { border-color: var(--accent-color); }
+        /* ⭐ 즐겨찾기 전용 내비게이션 바 */
+        .fav-navigation { background: #0f172a; border: 1px solid var(--border-color); padding: 15px 20px; border-radius: 8px; margin-top: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .fav-navigation span { font-size: 14px; color: var(--text-sub); }
 
-        /* 🔘 하단 버튼 컨트롤 영역 */
         .btn-group { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; }
         .left-btns, .right-btns { display: flex; gap: 10px; }
 
@@ -76,6 +74,9 @@
         .btn-danger:hover { background-color: var(--danger-hover); }
 
         .btn-warning { background-color: var(--warning-color); color: black; }
+
+        .empty-fav-msg { text-align: center; padding: 60px 20px; color: var(--text-sub); }
+        .empty-fav-msg h3 { margin-bottom: 10px; color: var(--text-main); }
     </style>
 </head>
 <body>
@@ -85,7 +86,7 @@
         <ul class="nav-menu">
             <li><a href="index.html">메인</a></li>
             <li><a href="about.html">사이트 소개</a></li>
-            <li><a href="#" class="active">상세 페이지</a></li>
+            <li><a href="#" class="active">⭐ 즐겨찾기 상세페이지</a></li>
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
     </div>
@@ -95,13 +96,13 @@
 </nav>
 
 <div class="container">
-    <div class="detail-card">
+    <div class="detail-card" id="cardContainer">
         <div class="detail-header">
             <div class="detail-title">
                 <span id="movieTitle">로딩 중...</span>
                 <span class="genre-badge" id="movieGenre">-</span>
             </div>
-            <button class="favorite-btn" onclick="alert('즐겨찾기에 추가되었습니다.')">☆ 즐겨찾기</button>
+            <button class="favorite-btn" id="favToggleBtn" onclick="toggleFavorite()">★ 즐겨찾기 해제</button>
         </div>
 
         <div class="detail-info">
@@ -111,28 +112,26 @@
         </div>
 
         <div class="detail-content" id="movieContent">
-            감상평 내용을 불러오는 중입니다...
+            즐겨찾기된 감상평을 불러오는 중입니다...
         </div>
 
         <div class="like-section">
             <button class="like-btn" onclick="likeMovie()">👍 이 감상평 추천하기</button>
         </div>
 
-        <!-- 관련 영화/장르 추천 -->
-        <div class="recommend-section">
-            <div class="recommend-title">🎬 관련 영화/장르 추천 기록</div>
-            <div class="recommend-item" id="recommendBox">
-                <span>동일 장르의 다른 추천글을 불러오는 중...</span>
-            </div>
+        <!-- ⭐ 즐겨찾기 목록 이동 가이드 -->
+        <div class="fav-navigation">
+            <button type="button" class="btn btn-secondary" id="prevFavBtn" onclick="navigateFav(-1)">&larr; 이전 즐겨찾기</button>
+            <span id="favIndexText">즐겨찾기 감상평 목록 불러오는 중...</span>
+            <button type="button" class="btn btn-secondary" id="nextFavBtn" onclick="navigateFav(1)">다음 즐겨찾기 &rarr;</button>
         </div>
 
-        <!-- 🔘 하단 버튼 그룹 (목록, 수정, 삭제, 숨김) -->
+        <!-- 🔘 버튼 그룹 -->
         <div class="btn-group">
             <div class="left-btns">
                 <a href="index.html" class="btn btn-secondary">목록으로</a>
             </div>
             <div class="right-btns">
-                <!-- 관리자용 숨김 버튼 (관리자일 때만 표시) -->
                 <button type="button" id="hideBtn" class="btn btn-warning" style="display: none;" onclick="toggleHide()"></button>
                 <button type="button" class="btn btn-primary" onclick="goEdit()">수정</button>
                 <button type="button" class="btn btn-danger" onclick="deleteMovie()">삭제</button>
@@ -142,9 +141,10 @@
 </div>
 
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const movieId = urlParams.get('id');
+    let movieId = new URLSearchParams(window.location.search).get('id');
     let currentMovie = null;
+    let favoriteIds = JSON.parse(localStorage.getItem('favMovies') || '[]');
+    let currentFavIndex = 0;
 
     function checkAdmin() {
         return localStorage.getItem('isAdmin') === 'true';
@@ -194,13 +194,28 @@
         }
     }
 
-    // 📄 1. 게시글 상세 정보 불러오기
-    async function loadMovieDetail() {
-        if (!movieId) {
-            alert('잘못된 접근입니다.');
-            window.location.href = 'index.html';
+    // ⭐ 즐겨찾기된 감상평만 조회하는 로직
+    async function loadFavoriteDetail() {
+        favoriteIds = JSON.parse(localStorage.getItem('favMovies') || '[]');
+
+        // 즐겨찾기된 목록이 하나도 없는 경우 처리
+        if (favoriteIds.length === 0) {
+            document.getElementById('cardContainer').innerHTML = `
+                <div class="empty-fav-msg">
+                    <h3>⭐ 즐겨찾기된 감상평이 없습니다.</h3>
+                    <p style="margin-bottom:20px;">메인 화면에서 감상평을 읽고 '즐겨찾기'를 등록해 보세요!</p>
+                    <a href="index.html" class="btn btn-primary">메인 목록으로 가기</a>
+                </div>
+            `;
             return;
         }
+
+        // URL의 id가 없거나 즐겨찾기 목록에 없으면 첫 번째 즐겨찾기 항목 선택
+        if (!movieId || !favoriteIds.includes(Number(movieId))) {
+            movieId = favoriteIds[0];
+        }
+
+        currentFavIndex = favoriteIds.indexOf(Number(movieId));
 
         try {
             const res = await fetch(`/api/movies/${movieId}`);
@@ -215,23 +230,43 @@
             document.getElementById('movieLikes').innerText = currentMovie.likes || 0;
             document.getElementById('movieContent').innerText = currentMovie.content;
 
-            // 관리자일 경우 숨김 버튼 제어
+            // 즐겨찾기 상태 및 내비게이션 UI 업데이트
+            document.getElementById('favIndexText').innerText = `⭐ 즐겨찾기 감상평 (${currentFavIndex + 1} / ${favoriteIds.length})`;
+            
+            // 이전/다음 버튼 활성화 상태
+            document.getElementById('prevFavBtn').disabled = (currentFavIndex === 0);
+            document.getElementById('nextFavBtn').disabled = (currentFavIndex === favoriteIds.length - 1);
+
             if (checkAdmin()) {
                 const hideBtn = document.getElementById('hideBtn');
                 hideBtn.style.display = 'inline-block';
                 hideBtn.innerText = currentMovie.isHidden ? '🔓 숨김 해제' : '🙈 숨김 처리';
             }
 
-            // 추천 연관 게시글 로드
-            loadRelatedMovie(currentMovie.genre, currentMovie.id);
-
         } catch (err) {
-            alert(err.message);
+            alert('즐겨찾기 게시글을 불러오는데 실패했습니다.');
             window.location.href = 'index.html';
         }
     }
 
-    // 👍 2. 추천하기 기능
+    // ⭐ 즐겨찾기 해제 기능
+    function toggleFavorite() {
+        const idNum = Number(movieId);
+        favoriteIds = favoriteIds.filter(id => id !== idNum);
+        localStorage.setItem('favMovies', JSON.stringify(favoriteIds));
+        alert('즐겨찾기 목록에서 삭제되었습니다.');
+        loadFavoriteDetail();
+    }
+
+    // ⭐ 즐겨찾기 목록 이전/다음 이동
+    function navigateFav(direction) {
+        const newIndex = currentFavIndex + direction;
+        if (newIndex >= 0 && newIndex < favoriteIds.length) {
+            window.location.href = `detail.html?id=${favoriteIds[newIndex]}`;
+        }
+    }
+
+    // 👍 추천 기능
     async function likeMovie() {
         try {
             const res = await fetch(`/api/movies/${movieId}/like`, { method: 'POST' });
@@ -243,37 +278,26 @@
         }
     }
 
-    // ✏️ 3. 수정 페이지 이동
     function goEdit() {
         window.location.href = `addForm.html?id=${movieId}`;
     }
 
-    // 🗑️ 4. 삭제 기능 (신규 추가!)
     async function deleteMovie() {
-        if (!confirm('정말로 이 영화 감상평을 삭제하시겠습니까?')) {
-            return;
-        }
+        if (!confirm('정말로 이 영화 감상평을 삭제하시겠습니까?')) return;
 
         try {
-            const res = await fetch(`/api/movies/${movieId}`, {
-                method: 'DELETE'
-            });
-
-            const data = await res.json();
-
+            const res = await fetch(`/api/movies/${movieId}`, { method: 'DELETE' });
             if (res.ok) {
+                toggleFavorite(); // 즐겨찾기 목록에서도 함께 제외
                 alert('감상평이 삭제되었습니다.');
-                window.location.href = 'index.html'; // 삭제 완료 후 메인 페이지 이동
             } else {
-                alert(data.error || '삭제 실패');
+                alert('삭제 실패');
             }
         } catch (err) {
-            console.error('삭제 요청 중 오류:', err);
-            alert('삭제 처리 중 오류가 발생했습니다.');
+            alert('삭제 처리 오류');
         }
     }
 
-    // 🙈 5. 숨김 처리 toggle 기능
     async function toggleHide() {
         const newStatus = currentMovie.isHidden ? 0 : 1;
         try {
@@ -286,40 +310,15 @@
             if (res.ok) {
                 alert(newStatus ? '게시글이 숨김 처리되었습니다.' : '숨김이 해제되었습니다.');
                 location.reload();
-            } else {
-                alert('숨김 변경 실패');
             }
         } catch (err) {
             alert('오류 발생');
         }
     }
 
-    // 🎬 연관 장르 글 가져오기
-    async function loadRelatedMovie(genre, currentId) {
-        try {
-            const res = await fetch(`/api/movies?genre=${encodeURIComponent(genre)}&isAdmin=${checkAdmin()}`);
-            const movies = await res.json();
-            const filtered = movies.filter(m => m.id != currentId);
-
-            const box = document.getElementById('recommendBox');
-            if (filtered.length > 0) {
-                const rel = filtered[0];
-                box.innerHTML = `
-                    <span><strong>${rel.title}</strong> <small style="color:var(--accent-color);">[ 동일 장르 ]</small></span>
-                    <span>✍️ ${rel.writer} | 👍 ${rel.likes || 0}</span>
-                `;
-                box.onclick = () => { window.location.href = `detail.html?id=${rel.id}`; };
-            } else {
-                box.innerHTML = `<span>추천할 동일 장르의 다른 글이 없습니다.</span>`;
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
     window.onload = () => {
         updateAdminBtn();
-        loadMovieDetail();
+        loadFavoriteDetail();
     };
 </script>
 </body>
