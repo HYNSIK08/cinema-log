@@ -140,9 +140,10 @@
 <div class="container">
     <div class="hero-banner">
         <h1>나만의 영화 감상 기록 공간</h1>
-        <p>장르별 검색, 추천 기능 및 자유로운 감상평 다크 갤러리</p>
+        <p>장르별 검색, TMDB 실시간 무비 정보 및 자유로운 감상평 다크 갤러리</p>
     </div>
 
+    <!-- TMDB API 가동 영역 -->
     <div class="api-section">
         <div class="api-header">
             <h2 id="apiSectionTitle">🔥 실시간 인기 트렌드 영화</h2>
@@ -170,7 +171,7 @@
             <option value="스릴러/공포">스릴러/공포</option>
             <option value="기타">기타</option>
         </select>
-        <input type="text" id="searchInput" placeholder="영화 제목으로 검색..." onkeyup="renderList()">
+        <input type="text" id="searchInput" placeholder="영화 제목으로 감상평 검색..." onkeyup="renderList()">
         <button type="button" class="btn" onclick="renderList()">검색</button>
     </div>
 
@@ -178,16 +179,13 @@
 </div>
 
 <script>
-    // 🔒 [보안] 소스 보기 및 개발자 도구 단축키 차단
+    // 🔒 단축키 차단
     document.addEventListener('keydown', function(e) {
         if (e.keyCode === 123) { e.preventDefault(); return false; }
         if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
         if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
         if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
     });
-
-    const ADMIN_ID = "hyunsik";
-    const ADMIN_PW = "7356";
 
     function checkAdmin() {
         return localStorage.getItem('isAdmin') === 'true';
@@ -208,7 +206,7 @@
         }
     }
 
-    function toggleAdmin() {
+    async function toggleAdmin() {
         if (checkAdmin()) {
             localStorage.setItem('isAdmin', 'false');
             alert('관리자 모드에서 로그아웃했습니다.');
@@ -220,15 +218,202 @@
             const inputPw = prompt("관리자 비밀번호를 입력하세요:");
             if (inputPw === null) return;
 
-            if (inputId.trim() === ADMIN_ID && inputPw.trim() === ADMIN_PW) {
-                localStorage.setItem('isAdmin', 'true');
-                alert('관리자 로그인 성공! 관리자 권한이 부여되었습니다.');
-                updateAdminBtn();
-                renderList();
-            } else {
-                alert('아이디 또는 비밀번호가 올바르지 않습니다.');
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: inputId.trim(), password: inputPw.trim() })
+                });
+
+                if (res.ok) {
+                    localStorage.setItem('isAdmin', 'true');
+                    alert('관리자 로그인 성공! 관리자 권한이 부여되었습니다.');
+                    updateAdminBtn();
+                    renderList();
+                } else {
+                    alert('아이디 또는 비밀번호가 올바르지 않습니다.');
+                }
+            } catch (err) {
+                alert('서버 응답 오류가 발생했습니다.');
             }
         }
+    }
+
+    // 🌐 백엔드를 통한 TMDB 인기 영화 조회
+    async function fetchApiMovies() {
+        const container = document.getElementById('apiMovieList');
+        document.getElementById('apiSectionTitle').innerText = '🔥 실시간 인기 트렌드 영화';
+        container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">불러오는 중...</div>';
+
+        try {
+            const res = await fetch('/api/tmdb/popular');
+            const data = await res.json();
+            renderApiMovies(data.results || []);
+        } catch (err) {
+            console.error('TMDB 로딩 에러:', err);
+            renderBackupMovies(container);
+        }
+    }
+
+    // 🌐 백엔드를 통한 TMDB 영화 검색
+    async function searchApiMovies() {
+        const query = document.getElementById('apiSearchInput').value.trim();
+        if (!query) {
+            alert('검색어를 입력해 주세요.');
+            return;
+        }
+
+        const container = document.getElementById('apiMovieList');
+        document.getElementById('apiSectionTitle').innerText = `🔍 TMDB 검색 결과: "${query}"`;
+        container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">검색 중...</div>';
+
+        try {
+            const res = await fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            renderApiMovies(data.results || []);
+        } catch (err) {
+            console.error('TMDB 검색 에러:', err);
+            container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">검색 중 오류가 발생했습니다.</div>';
+        }
+    }
+
+    // TMDB 카드 렌더링
+    function renderApiMovies(movies) {
+        const container = document.getElementById('apiMovieList');
+        container.innerHTML = '';
+
+        if (movies.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-sub); padding:10px;">검색 결과가 없습니다.</div>';
+            return;
+        }
+
+        movies.forEach(movie => {
+            const card = document.createElement('div');
+            card.className = 'api-movie-card';
+            
+            const posterUrl = movie.poster_path 
+                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';
+
+            card.innerHTML = `
+                <img src="${posterUrl}" alt="${movie.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';">
+                <div class="api-movie-info">
+                    <div class="api-movie-title" title="${movie.title}">${movie.title}</div>
+                    <div class="api-movie-vote">★ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</div>
+                </div>
+            `;
+            
+            card.onclick = () => {
+                if (confirm(`'${movie.title}' 영화 감상평을 작성하시겠습니까?`)) {
+                    window.location.href = `addForm.html?title=${encodeURIComponent(movie.title)}`;
+                }
+            };
+            container.appendChild(card);
+        });
+    }
+
+    // 예비 폴백 데이터
+    function renderBackupMovies(container) {
+        const fallbackMovies = [
+            { id: 1022789, title: "인사이드 아웃 2", vote: "8.5", img: "./image/insideout2.jpg" },
+            { id: 934632, title: "파묘", vote: "8.2", img: "./image/pamyo.jpg" },
+            { id: 1011985, title: "범죄도시 4", vote: "7.8", img: "./image/crimecity4.jpg" },
+            { id: 76600, title: "아바타: 물의 길", vote: "8.8", img: "./image/avatar2.jpg" }
+        ];
+
+        container.innerHTML = '';
+        fallbackMovies.forEach(movie => {
+            const card = document.createElement('div');
+            card.className = 'api-movie-card';
+            card.innerHTML = `
+                <img src="${movie.img}" alt="${movie.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';">
+                <div class="api-movie-info">
+                    <div class="api-movie-title">${movie.title}</div>
+                    <div class="api-movie-vote">★ ${movie.vote}</div>
+                </div>
+            `;
+            card.onclick = () => { window.location.href = `addForm.html?title=${encodeURIComponent(movie.title)}`; };
+            container.appendChild(card);
+        });
+    }
+
+    // 등록된 영화 감상평 목록 렌더링
+    async function renderList() {
+        const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+        const genre = document.getElementById('genreSelect').value;
+        const isAdmin = checkAdmin();
+        const grid = document.getElementById('movieGrid');
+
+        let movies = [];
+
+        try {
+            const response = await fetch(`/api/movies?search=${encodeURIComponent(keyword)}&genre=${encodeURIComponent(genre)}&isAdmin=${isAdmin}`);
+            if (response.ok) {
+                movies = await response.json();
+            } else {
+                throw new Error('API 호출 불가');
+            }
+        } catch (error) {
+            movies = JSON.parse(localStorage.getItem('myMovies') || '[]');
+            if (keyword) {
+                movies = movies.filter(m => m.title && m.title.toLowerCase().includes(keyword));
+            }
+            if (genre) {
+                movies = movies.filter(m => m.genre === genre);
+            }
+            if (!isAdmin) {
+                movies = movies.filter(m => !m.isHidden);
+            }
+        }
+
+        grid.innerHTML = '';
+        
+        if (!movies || movies.length === 0) {
+            grid.innerHTML = '<div class="empty-msg">등록된 영화 감상평이 없습니다.</div>';
+            return;
+        }
+
+        const navDetailBtn = document.getElementById('recentDetailNav');
+        if (navDetailBtn && movies.length > 0) {
+            navDetailBtn.href = `detail.html?id=${movies[0].id}`;
+        }
+
+        movies.forEach((m) => {
+            const card = document.createElement('div');
+            card.className = `movie-card ${m.isHidden ? 'hidden-card' : ''}`;
+            
+            card.onclick = () => { window.location.href = `detail.html?id=${m.id}`; };
+
+            const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : '2026. 08. 04';
+            
+            let adminBtnsHtml = '';
+            if (isAdmin) {
+                const hideText = m.isHidden ? '👁️ 노출' : '🙈 숨김';
+                adminBtnsHtml = `
+                    <button class="admin-action-btn btn-hide-card" onclick="toggleHideMovie(event, '${m.id}', ${!!m.isHidden})">${hideText}</button>
+                    <button class="admin-action-btn btn-delete-card" onclick="deleteSingleMovie(event, '${m.id}')">🗑️ 삭제</button>
+                `;
+            }
+
+            card.innerHTML = `
+                <div>
+                    <div class="card-header">
+                        <span class="card-title">${m.title}</span>
+                        <span class="genre-badge">${m.genre || '기타'}</span>
+                    </div>
+                    <div class="card-info">
+                        <span>✍️ ${m.writer || '익명'} ${m.isHidden ? '<span class="hidden-badge">[숨겨짐]</span>' : ''} ${adminBtnsHtml}</span>
+                        <span>📅 ${dateStr}</span>
+                    </div>
+                    <div class="card-content">${m.content || '등록된 감상평이 없습니다.'}</div>
+                </div>
+                <div class="card-footer">
+                    <span>👁️ ${m.views || 0}회 | 👍 ${m.likes || 0}</span>
+                    <span style="color:var(--accent-color); font-weight:bold;">감상평 읽기 &rarr;</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
     }
 
     async function toggleHideMovie(event, id, currentStatus) {
@@ -301,118 +486,10 @@
         }
     }
 
-    function renderBackupMovies(container) {
-        const fallbackMovies = [
-            { id: 1022789, title: "인사이드 아웃 2", vote: "8.5", img: "./image/insideout2.jpg" },
-            { id: 934632, title: "파묘", vote: "8.2", img: "./image/pamyo.jpg" },
-            { id: 1011985, title: "범죄도시 4", vote: "7.8", img: "./image/crimecity4.jpg" },
-            { id: 76600, title: "아바타: 물의 길", vote: "8.8", img: "./image/avatar2.jpg" }
-        ];
-
-        container.innerHTML = '';
-        fallbackMovies.forEach(movie => {
-            const card = document.createElement('div');
-            card.className = 'api-movie-card';
-            card.innerHTML = `
-                <img src="${movie.img}" alt="${movie.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300';">
-                <div class="api-movie-info">
-                    <div class="api-movie-title">${movie.title}</div>
-                    <div class="api-movie-vote">★ ${movie.vote}</div>
-                </div>
-            `;
-            card.onclick = () => { window.location.href = `detail.html?movieId=${movie.id}&title=${encodeURIComponent(movie.title)}`; };
-            container.appendChild(card);
-        });
-    }
-
-    async function renderList() {
-        const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-        const genre = document.getElementById('genreSelect').value;
-        const isAdmin = checkAdmin();
-        const grid = document.getElementById('movieGrid');
-
-        let movies = [];
-
-        try {
-            const response = await fetch(`/api/movies?search=${encodeURIComponent(keyword)}&genre=${encodeURIComponent(genre)}&isAdmin=${isAdmin}`);
-            if (response.ok) {
-                movies = await response.json();
-            } else {
-                throw new Error('API 호출 불가');
-            }
-        } catch (error) {
-            movies = JSON.parse(localStorage.getItem('myMovies') || '[]');
-            if (keyword) {
-                movies = movies.filter(m => m.title && m.title.toLowerCase().includes(keyword));
-            }
-            if (genre) {
-                movies = movies.filter(m => m.genre === genre);
-            }
-            if (!isAdmin) {
-                movies = movies.filter(m => !m.isHidden);
-            }
-        }
-
-        grid.innerHTML = '';
-        
-        if (!movies || movies.length === 0) {
-            grid.innerHTML = '<div class="empty-msg">등록된 영화 감상평이 없습니다.</div>';
-            return;
-        }
-
-        const navDetailBtn = document.getElementById('recentDetailNav');
-        if (navDetailBtn && movies.length > 0) {
-            navDetailBtn.href = `detail.html?id=${movies[0].id}`;
-        }
-
-        movies.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-        movies.forEach((m) => {
-            const card = document.createElement('div');
-            card.className = `movie-card ${m.isHidden ? 'hidden-card' : ''}`;
-            
-            card.onclick = () => { window.location.href = `detail.html?id=${m.id}`; };
-
-            const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : '2026. 08. 04';
-            
-            let adminBtnsHtml = '';
-            if (isAdmin) {
-                const hideText = m.isHidden ? '👁️ 노출' : '🙈 숨김';
-                adminBtnsHtml = `
-                    <button class="admin-action-btn btn-hide-card" onclick="toggleHideMovie(event, '${m.id}', ${!!m.isHidden})">${hideText}</button>
-                    <button class="admin-action-btn btn-delete-card" onclick="deleteSingleMovie(event, '${m.id}')">🗑️ 삭제</button>
-                `;
-            }
-
-            card.innerHTML = `
-                <div>
-                    <div class="card-header">
-                        <span class="card-title">${m.title}</span>
-                        <span class="genre-badge">${m.genre || '기타'}</span>
-                    </div>
-                    <div class="card-info">
-                        <span>✍️ ${m.writer || '익명'} ${m.isHidden ? '<span class="hidden-badge">[숨겨짐]</span>' : ''} ${adminBtnsHtml}</span>
-                        <span>📅 ${dateStr}</span>
-                    </div>
-                    <div class="card-content">${m.content || '등록된 감상평이 없습니다.'}</div>
-                </div>
-                <div class="card-footer">
-                    <span>👁️ ${m.views || 0}회 | 👍 ${m.likes || 0}</span>
-                    <span style="color:var(--accent-color); font-weight:bold;">감상평 읽기 &rarr;</span>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    }
-
-    // 🚀 페이지 로드 시 무조건 로그아웃 상태(일반 사용자)로 초기화
     window.onload = () => {
-        localStorage.setItem('isAdmin', 'false'); // 접속 시 로그아웃 상태로 강제 세팅
+        localStorage.setItem('isAdmin', 'false'); // 초기화
         updateAdminBtn();
-        
-        const apiContainer = document.getElementById('apiMovieList');
-        if (apiContainer) renderBackupMovies(apiContainer);
-        
+        fetchApiMovies(); // TMDB 인기 영화 자동 조회
         renderList();
     };
 </script>

@@ -6,9 +6,17 @@ const mysql = require('mysql2/promise');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// TMDB API 정보
+const TMDB_API_KEY = '0de30fcff153e1d01942f9fe2e563d0b';
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 정적 파일 제공 (프로젝트 루트 및 public 디렉터리)
+app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Clever Cloud MySQL 연결 풀 생성
 const pool = mysql.createPool({
@@ -21,9 +29,6 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
-
-// 정적 파일 제공 (프로젝트 루트 경로)
-app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -54,14 +59,53 @@ async function initDB() {
 }
 initDB();
 
-// 🔒 관리자 계정 정보 (서버 관리용)
+// 🔒 관리자 계정 정보
 const ADMIN_ID = "hyunsik";
 const ADMIN_PW = "7356";
 
-// 🔑 [신규 추가] 관리자 로그인 검증 API
+// ----------------------------------------------------
+// 🎬 TMDB API 연동 엔드포인트
+// ----------------------------------------------------
+
+// TMDB 인기 영화 목록
+app.get('/api/tmdb/popular', async (req, res) => {
+    try {
+        const url = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('TMDB API 응답 실패');
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('TMDB popular error:', error);
+        res.status(500).json({ error: 'TMDB 영화 정보를 불러오지 못했습니다.' });
+    }
+});
+
+// TMDB 영화 검색
+app.get('/api/tmdb/search', async (req, res) => {
+    const query = req.query.query;
+    if (!query) {
+        return res.status(400).json({ error: '검색어를 입력해 주세요.' });
+    }
+    try {
+        const url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(query)}&page=1`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('TMDB 검색 API 응답 실패');
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('TMDB search error:', error);
+        res.status(500).json({ error: 'TMDB 영화 검색 실패' });
+    }
+});
+
+// ----------------------------------------------------
+// 📝 서비스 API
+// ----------------------------------------------------
+
+// 관리자 로그인 검증 API
 app.post('/api/login', (req, res) => {
     const { id, password } = req.body;
-
     if (id === ADMIN_ID && password === ADMIN_PW) {
         res.json({ success: true, message: "관리자 인증 성공" });
     } else {
@@ -146,19 +190,30 @@ app.post('/api/movies/:id/like', async (req, res) => {
     }
 });
 
-// 6. 숨김 처리 (PATCH)
-app.patch('/api/movies/:id/hide', async (req, res) => {
+// 6. 숨김 처리 (PATCH 및 기존 /hide 지원)
+app.patch('/api/movies/:id/toggle-hide', async (req, res) => {
     const { id } = req.params;
     const { isHidden } = req.body;
     try {
-        await pool.query("UPDATE movies SET isHidden = ? WHERE id = ?", [isHidden, id]);
+        await pool.query("UPDATE movies SET isHidden = ? WHERE id = ?", [isHidden ? 1 : 0, id]);
         res.json({ message: "숨김 상태 변경 완료" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 7. 삭제
+app.patch('/api/movies/:id/hide', async (req, res) => {
+    const { id } = req.params;
+    const { isHidden } = req.body;
+    try {
+        await pool.query("UPDATE movies SET isHidden = ? WHERE id = ?", [isHidden ? 1 : 0, id]);
+        res.json({ message: "숨김 상태 변경 완료" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 7. 개별 삭제
 app.delete('/api/movies/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -169,8 +224,16 @@ app.delete('/api/movies/:id', async (req, res) => {
     }
 });
 
+// 8. 전체 삭제
+app.delete('/api/movies', async (req, res) => {
+    try {
+        await pool.query("TRUNCATE TABLE movies");
+        res.json({ message: "전체 삭제 완료" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-app.use(express.static('public'));
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
