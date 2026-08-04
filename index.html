@@ -130,7 +130,7 @@
     <!-- 🌟 실시간 영화 API 트렌드 및 검색 영역 -->
     <div class="api-section">
         <div class="api-header">
-            <h2 id="apiSectionTitle">🔥 실시간 인기 트렌드 영화 (클릭 시 리뷰 작성)</h2>
+            <h2 id="apiSectionTitle">🔥 실시간 인기 트렌드 영화 (클릭 시 상세 정보 보기)</h2>
             <div class="api-search-box">
                 <input type="text" id="apiSearchInput" placeholder="영화 제목 검색..." onkeyup="if(event.key==='Enter') searchApiMovies()">
                 <button type="button" onclick="searchApiMovies()">검색</button>
@@ -214,116 +214,118 @@
             }
         }
     }
-// 🔑 TMDB API KEY (만료 방지 및 안정적인 접근을 위해 갱신)
-const TMDB_API_KEY = 'f97987814400762f02f8373b5a1b32d2';
 
-// 🎬 1. 외부 영화 API 인기 목록 불러오기
-async function fetchApiMovies() {
-    const titleElem = document.getElementById('apiSectionTitle');
-    if (titleElem) titleElem.innerText = "🔥 실시간 인기 트렌드 영화 (클릭 시 리뷰 작성)";
-    
-    // 인기 영화 API (한국어 지원)
-    const url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`;
-    await renderApiMovies(url);
-}
+    // 🔑 TMDB API KEY (만료 방지 및 안정적인 접근을 위해 갱신)
+    const TMDB_API_KEY = 'f97987814400762f02f8373b5a1b32d2';
 
-// 🎬 2. 실시간 영화 제목 검색 API 호출
-async function searchApiMovies() {
-    const inputElem = document.getElementById('apiSearchInput');
-    const query = inputElem ? inputElem.value.trim() : '';
-    
-    if (!query) {
-        alert('검색할 영화 제목을 입력해주세요!');
-        return;
-    }
-    
-    const titleElem = document.getElementById('apiSectionTitle');
-    if (titleElem) titleElem.innerText = `🔍 '${query}' 실시간 검색 결과 (클릭 시 리뷰 작성)`;
-    
-    const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(query)}&page=1`;
-    await renderApiMovies(url);
-}
-
-// 🎬 3. 영화 API Fetch 및 UI 렌더링 (에러 및 대체 데이터 처리 포함)
-async function renderApiMovies(url) {
-    const apiContainer = document.getElementById('apiMovieList');
-    if (!apiContainer) return;
-
-    apiContainer.innerHTML = '<div style="color:var(--text-sub); font-size:14px; padding:10px;">⚡ 영화 데이터를 실시간으로 가져오는 중입니다...</div>';
-
-    try {
-        const res = await fetch(url);
+    // 🎬 1. 외부 영화 API 인기 목록 불러오기
+    async function fetchApiMovies() {
+        const titleElem = document.getElementById('apiSectionTitle');
+        if (titleElem) titleElem.innerText = "🔥 실시간 인기 트렌드 영화 (클릭 시 상세 정보 보기)";
         
-        if (!res.ok) {
-            throw new Error(`API 통신 실패 (상태 코드: ${res.status})`);
-        }
-
-        const data = await res.json();
-        apiContainer.innerHTML = ''; // 기존 로딩 메시지 제거
-        
-        if (data.results && data.results.length > 0) {
-            data.results.forEach(movie => {
-                const card = document.createElement('div');
-                card.className = 'api-movie-card';
-                
-                // 포스터 이미지가 없는 경우 기본 대체 이미지 지정
-                const posterUrl = movie.poster_path 
-                    ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` 
-                    : 'https://via.placeholder.com/150x210/1e293b/f8fafc?text=No+Poster';
-
-                const voteAvg = movie.vote_average ? movie.vote_average.toFixed(1) : '0.0';
-
-                card.innerHTML = `
-                    <img src="${posterUrl}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/150x210/1e293b/f8fafc?text=No+Poster'">
-                    <div class="api-movie-info">
-                        <div class="api-movie-title" title="${movie.title}">${movie.title}</div>
-                        <div class="api-movie-vote">★ ${voteAvg}</div>
-                    </div>
-                `;
-
-                // 영화 카드 클릭 시 addForm.html로 영화 제목 전달
-                card.onclick = () => {
-                    window.location.href = `addForm.html?title=${encodeURIComponent(movie.title)}`;
-                };
-
-                apiContainer.appendChild(card);
-            });
-        } else {
-            apiContainer.innerHTML = '<div style="color:var(--text-sub); font-size:14px; padding:10px;">🔍 검색 결과가 없습니다. 다른 검색어를 입력해 보세요!</div>';
-        }
-    } catch (err) {
-        console.error("영화 API 연동 에러 원인:", err);
-        // 네트워크 차단 또는 Key 오류 시 백업용 기본 더미 목록 출력 (사용자 경험 유지)
-        renderBackupMovies(apiContainer);
+        // 인기 영화 API (한국어 지원)
+        const url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`;
+        await renderApiMovies(url);
     }
-}
 
-// 🛡️ API 연결 실패 시 작동하는 예비(Fallback) 데이터 함수
-function renderBackupMovies(container) {
-    const fallbackMovies = [
-        { title: "인사이드 아웃 2", vote: "8.5", img: "https://via.placeholder.com/150x210/6c5ce7/ffffff?text=Inside+Out+2" },
-        { title: "파묘", vote: "8.2", img: "https://via.placeholder.com/150x210/1e293b/ffffff?text=Exhuma" },
-        { title: "범죄도시 4", vote: "7.8", img: "https://via.placeholder.com/150x210/334155/ffffff?text=Roundup" },
-        { title: "아바타: 물의 길", vote: "8.8", img: "https://via.placeholder.com/150x210/0f172a/ffffff?text=Avatar+2" }
-    ];
+    // 🎬 2. 실시간 영화 제목 검색 API 호출
+    async function searchApiMovies() {
+        const inputElem = document.getElementById('apiSearchInput');
+        const query = inputElem ? inputElem.value.trim() : '';
+        
+        if (!query) {
+            alert('검색할 영화 제목을 입력해주세요!');
+            return;
+        }
+        
+        const titleElem = document.getElementById('apiSectionTitle');
+        if (titleElem) titleElem.innerText = `🔍 '${query}' 실시간 검색 결과 (클릭 시 상세 정보 보기)`;
+        
+        const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(query)}&page=1`;
+        await renderApiMovies(url);
+    }
 
-    container.innerHTML = '';
-    fallbackMovies.forEach(movie => {
-        const card = document.createElement('div');
-        card.className = 'api-movie-card';
-        card.innerHTML = `
-            <img src="${movie.img}" alt="${movie.title}">
-            <div class="api-movie-info">
-                <div class="api-movie-title">${movie.title}</div>
-                <div class="api-movie-vote">★ ${movie.vote}</div>
-            </div>
-        `;
-        card.onclick = () => {
-            window.location.href = `addForm.html?title=${encodeURIComponent(movie.title)}`;
-        };
-        container.appendChild(card);
-    });
-}
+    // 🎬 3. 영화 API Fetch 및 UI 렌더링 (에러 및 대체 데이터 처리 포함)
+    async function renderApiMovies(url) {
+        const apiContainer = document.getElementById('apiMovieList');
+        if (!apiContainer) return;
+
+        apiContainer.innerHTML = '<div style="color:var(--text-sub); font-size:14px; padding:10px;">⚡ 영화 데이터를 실시간으로 가져오는 중입니다...</div>';
+
+        try {
+            const res = await fetch(url);
+            
+            if (!res.ok) {
+                throw new Error(`API 통신 실패 (상태 코드: ${res.status})`);
+            }
+
+            const data = await res.json();
+            apiContainer.innerHTML = ''; // 기존 로딩 메시지 제거
+            
+            if (data.results && data.results.length > 0) {
+                data.results.forEach(movie => {
+                    const card = document.createElement('div');
+                    card.className = 'api-movie-card';
+                    
+                    // 포스터 이미지가 없는 경우 기본 대체 이미지 지정
+                    const posterUrl = movie.poster_path 
+                        ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` 
+                        : 'https://via.placeholder.com/150x210/1e293b/f8fafc?text=No+Poster';
+
+                    const voteAvg = movie.vote_average ? movie.vote_average.toFixed(1) : '0.0';
+
+                    card.innerHTML = `
+                        <img src="${posterUrl}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/150x210/1e293b/f8fafc?text=No+Poster'">
+                        <div class="api-movie-info">
+                            <div class="api-movie-title" title="${movie.title}">${movie.title}</div>
+                            <div class="api-movie-vote">★ ${voteAvg}</div>
+                        </div>
+                    `;
+
+                    // ⭐ 영화 카드 클릭 시 detail.html로 이동하도록 수정!
+                    card.onclick = () => {
+                        window.location.href = `detail.html?title=${encodeURIComponent(movie.title)}`;
+                    };
+
+                    apiContainer.appendChild(card);
+                });
+            } else {
+                apiContainer.innerHTML = '<div style="color:var(--text-sub); font-size:14px; padding:10px;">🔍 검색 결과가 없습니다. 다른 검색어를 입력해 보세요!</div>';
+            }
+        } catch (err) {
+            console.error("영화 API 연동 에러 원인:", err);
+            // 네트워크 차단 또는 Key 오류 시 백업용 기본 더미 목록 출력 (사용자 경험 유지)
+            renderBackupMovies(apiContainer);
+        }
+    }
+
+    // 🛡️ API 연결 실패 시 작동하는 예비(Fallback) 데이터 함수
+    function renderBackupMovies(container) {
+        const fallbackMovies = [
+            { title: "인사이드 아웃 2", vote: "8.5", img: "https://via.placeholder.com/150x210/6c5ce7/ffffff?text=Inside+Out+2" },
+            { title: "파묘", vote: "8.2", img: "https://via.placeholder.com/150x210/1e293b/ffffff?text=Exhuma" },
+            { title: "범죄도시 4", vote: "7.8", img: "https://via.placeholder.com/150x210/334155/ffffff?text=Roundup" },
+            { title: "아바타: 물의 길", vote: "8.8", img: "https://via.placeholder.com/150x210/0f172a/ffffff?text=Avatar+2" }
+        ];
+
+        container.innerHTML = '';
+        fallbackMovies.forEach(movie => {
+            const card = document.createElement('div');
+            card.className = 'api-movie-card';
+            card.innerHTML = `
+                <img src="${movie.img}" alt="${movie.title}">
+                <div class="api-movie-info">
+                    <div class="api-movie-title">${movie.title}</div>
+                    <div class="api-movie-vote">★ ${movie.vote}</div>
+                </div>
+            `;
+            // ⭐ 예비 더미 카드 클릭 시에도 detail.html로 이동하도록 수정!
+            card.onclick = () => {
+                window.location.href = `detail.html?title=${encodeURIComponent(movie.title)}`;
+            };
+            container.appendChild(card);
+        });
+    }
 
     async function initDetailMenu() {
         const isAdmin = checkAdmin();

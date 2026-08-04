@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시네마 로그 - 즐겨찾기 감상평 상세</title>
+    <title>시네마 로그 - 영화 상세 정보</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -13,9 +13,7 @@
             --accent-color: #6c5ce7;
             --accent-hover: #5b4bc4;
             --border-color: #334155;
-            --danger-color: #ef4444;
-            --danger-hover: #dc2626;
-            --warning-color: #f59e0b;
+            --warning-color: #f1c40f;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,298 +26,163 @@
         .nav-menu a { color: var(--text-sub); text-decoration: none; font-weight: bold; transition: 0.2s; }
         .nav-menu a:hover, .nav-menu a.active { color: var(--accent-color); }
 
-        .admin-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: var(--text-sub); cursor: pointer; font-size: 13px; font-weight: bold; }
-        .admin-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
-
-        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
         
-        .detail-card { 
+        .movie-detail-container { 
             background-color: var(--card-bg); 
             border: 1px solid var(--border-color); 
-            border-radius: 12px; 
+            border-radius: 16px; 
             padding: 30px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
         }
 
-        .detail-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
-        .detail-title { font-size: 24px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
-        .genre-badge { background: #0f172a; border: 1px solid var(--border-color); color: var(--accent-color); font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
-        
-        .favorite-btn { background: transparent; border: 1px solid var(--warning-color); color: var(--warning-color); padding: 6px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .favorite-btn.active { background: var(--warning-color); color: black; }
+        .poster-box { flex-shrink: 0; width: 280px; }
+        .poster-box img { width: 100%; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; }
 
-        .detail-info { background: #0f172a; padding: 12px 20px; border-radius: 8px; margin: 20px 0; display: flex; gap: 20px; font-size: 14px; color: var(--text-sub); border: 1px solid var(--border-color); }
+        .info-box { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .movie-header { margin-bottom: 15px; }
+        .movie-title { font-size: 28px; font-weight: bold; color: var(--text-main); margin-bottom: 8px; }
+        .movie-tagline { font-size: 15px; color: var(--accent-color); font-style: italic; margin-bottom: 12px; }
 
-        .detail-content { font-size: 16px; line-height: 1.8; color: var(--text-main); background: #0f172a; padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 180px; white-space: pre-line; word-break: break-all; }
+        .meta-list { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; font-size: 14px; }
+        .meta-badge { background: #0f172a; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; color: var(--text-sub); }
+        .vote-badge { background: rgba(241, 196, 15, 0.1); border: 1px solid var(--warning-color); color: var(--warning-color); font-weight: bold; }
 
-        .like-section { text-align: center; margin: 30px 0; }
-        .like-btn { background: transparent; border: 1px solid var(--warning-color); color: var(--warning-color); padding: 10px 24px; border-radius: 25px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
-        .like-btn:hover { background: var(--warning-color); color: black; }
+        .overview-box { background: #0f172a; border: 1px solid var(--border-color); padding: 20px; border-radius: 10px; margin-bottom: 20px; flex: 1; }
+        .overview-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: var(--text-main); }
+        .overview-text { font-size: 14px; line-height: 1.7; color: var(--text-sub); white-space: pre-line; word-break: keep-all; }
 
-        /* ⭐ 즐겨찾기 전용 내비게이션 바 */
-        .fav-navigation { background: #0f172a; border: 1px solid var(--border-color); padding: 15px 20px; border-radius: 8px; margin-top: 25px; display: flex; justify-content: space-between; align-items: center; }
-        .fav-navigation span { font-size: 14px; color: var(--text-sub); }
-
-        .btn-group { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; }
-        .left-btns, .right-btns { display: flex; gap: 10px; }
-
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; text-decoration: none; display: inline-block; }
-        .btn-secondary { background-color: #334155; color: white; }
-        .btn-secondary:hover { background-color: #475569; }
-        
+        .action-btns { display: flex; gap: 12px; }
+        .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; display: inline-block; transition: 0.2s; text-align: center; }
         .btn-primary { background-color: var(--accent-color); color: white; }
         .btn-primary:hover { background-color: var(--accent-hover); }
+        .btn-secondary { background-color: #334155; color: white; }
+        .btn-secondary:hover { background-color: #475569; }
 
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-danger:hover { background-color: var(--danger-hover); }
-
-        .btn-warning { background-color: var(--warning-color); color: black; }
-
-        .empty-fav-msg { text-align: center; padding: 60px 20px; color: var(--text-sub); }
-        .empty-fav-msg h3 { margin-bottom: 10px; color: var(--text-main); }
+        @media (max-width: 768px) {
+            .movie-detail-container { flex-direction: column; }
+            .poster-box { width: 100%; text-align: center; }
+            .poster-box img { max-width: 250px; }
+        }
     </style>
 </head>
 <body>
+
 <nav class="navbar">
     <div class="nav-left">
         <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
         <ul class="nav-menu">
             <li><a href="index.html">메인</a></li>
             <li><a href="about.html">사이트 소개</a></li>
-            <li><a href="#" class="active">⭐ 즐겨찾기 상세페이지</a></li>
+            <li><a href="#" class="active">영화 상세 정보</a></li>
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
-    </div>
-    <div>
-        <button id="adminToggleBtn" class="admin-btn" onclick="toggleAdmin()">🔒 관리자 로그인</button>
     </div>
 </nav>
 
 <div class="container">
-    <div class="detail-card" id="cardContainer">
-        <div class="detail-header">
-            <div class="detail-title">
-                <span id="movieTitle">로딩 중...</span>
-                <span class="genre-badge" id="movieGenre">-</span>
-            </div>
-            <button class="favorite-btn" id="favToggleBtn" onclick="toggleFavorite()">★ 즐겨찾기 해제</button>
-        </div>
-
-        <div class="detail-info">
-            <span>✍️ 작성자: <strong id="movieWriter" style="color:var(--text-main);">-</strong></span>
-            <span>👁️ 조회수: <strong id="movieViews" style="color:var(--text-main);">0</strong></span>
-            <span>👍 추천수: <strong id="movieLikes" style="color:var(--text-main);">0</strong></span>
-        </div>
-
-        <div class="detail-content" id="movieContent">
-            즐겨찾기된 감상평을 불러오는 중입니다...
-        </div>
-
-        <div class="like-section">
-            <button class="like-btn" onclick="likeMovie()">👍 이 감상평 추천하기</button>
-        </div>
-
-        <!-- ⭐ 즐겨찾기 목록 이동 가이드 -->
-        <div class="fav-navigation">
-            <button type="button" class="btn btn-secondary" id="prevFavBtn" onclick="navigateFav(-1)">&larr; 이전 즐겨찾기</button>
-            <span id="favIndexText">즐겨찾기 감상평 목록 불러오는 중...</span>
-            <button type="button" class="btn btn-secondary" id="nextFavBtn" onclick="navigateFav(1)">다음 즐겨찾기 &rarr;</button>
-        </div>
-
-        <!-- 🔘 버튼 그룹 -->
-        <div class="btn-group">
-            <div class="left-btns">
-                <a href="index.html" class="btn btn-secondary">목록으로</a>
-            </div>
-            <div class="right-btns">
-                <button type="button" id="hideBtn" class="btn btn-warning" style="display: none;" onclick="toggleHide()"></button>
-                <button type="button" class="btn btn-primary" onclick="goEdit()">수정</button>
-                <button type="button" class="btn btn-danger" onclick="deleteMovie()">삭제</button>
-            </div>
+    <div class="movie-detail-container" id="detailContent">
+        <div style="text-align:center; width:100%; padding:50px; color:var(--text-sub);">
+            ⚡ 영화 정보를 불러오는 중입니다...
         </div>
     </div>
 </div>
 
 <script>
-    let movieId = new URLSearchParams(window.location.search).get('id');
-    let currentMovie = null;
-    let favoriteIds = JSON.parse(localStorage.getItem('favMovies') || '[]');
-    let currentFavIndex = 0;
+    const TMDB_API_KEY = 'f97987814400762f02f8373b5a1b32d2';
 
-    function checkAdmin() {
-        return localStorage.getItem('isAdmin') === 'true';
-    }
+    // URL 파라미터 가져오기 (movieId 또는 title)
+    const urlParams = new URLSearchParams(window.location.search);
+    const apiMovieId = urlParams.get('movieId');
+    const movieTitle = urlParams.get('title');
 
-    function updateAdminBtn() {
-        const btn = document.getElementById('adminToggleBtn');
-        if (checkAdmin()) {
-            btn.innerText = "🔓 관리자 로그아웃";
-            btn.classList.add('active');
-        } else {
-            btn.innerText = "🔒 관리자 로그인";
-            btn.classList.remove('active');
-        }
-    }
+    async function fetchMovieDetails() {
+        const container = document.getElementById('detailContent');
 
-    async function toggleAdmin() {
-        if (checkAdmin()) {
-            localStorage.setItem('isAdmin', 'false');
-            alert('관리자 모드에서 로그아웃했습니다.');
-            location.reload();
-        } else {
-            const inputId = prompt("관리자 아이디를 입력하세요:");
-            if (inputId === null) return;
-            const inputPw = prompt("관리자 비밀번호를 입력하세요:");
-            if (inputPw === null) return;
+        try {
+            let movie = null;
 
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: inputId.trim(), password: inputPw.trim() })
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    localStorage.setItem('isAdmin', 'true');
-                    alert('관리자 로그인 성공!');
-                    location.reload();
-                } else {
-                    alert(result.message || '로그인 실패');
+            // 1. API ID가 직접 넘어온 경우
+            if (apiMovieId) {
+                const res = await fetch(`https://api.themoviedb.org/3/movie/${apiMovieId}?api_key=${TMDB_API_KEY}&language=ko-KR`);
+                if (res.ok) movie = await res.json();
+            } 
+            // 2. 영화 제목으로 검색해서 넘어온 경우
+            else if (movieTitle) {
+                const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(movieTitle)}`);
+                const data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    movie = data.results[0]; // 가장 연관성 높은 첫 번째 결과 선택
                 }
-            } catch (error) {
-                alert('서버와 통신할 수 없습니다.');
-            }
-        }
-    }
-
-    // ⭐ 즐겨찾기된 감상평만 조회하는 로직
-    async function loadFavoriteDetail() {
-        favoriteIds = JSON.parse(localStorage.getItem('favMovies') || '[]');
-
-        // 즐겨찾기된 목록이 하나도 없는 경우 처리
-        if (favoriteIds.length === 0) {
-            document.getElementById('cardContainer').innerHTML = `
-                <div class="empty-fav-msg">
-                    <h3>⭐ 즐겨찾기된 감상평이 없습니다.</h3>
-                    <p style="margin-bottom:20px;">메인 화면에서 감상평을 읽고 '즐겨찾기'를 등록해 보세요!</p>
-                    <a href="index.html" class="btn btn-primary">메인 목록으로 가기</a>
-                </div>
-            `;
-            return;
-        }
-
-        // URL의 id가 없거나 즐겨찾기 목록에 없으면 첫 번째 즐겨찾기 항목 선택
-        if (!movieId || !favoriteIds.includes(Number(movieId))) {
-            movieId = favoriteIds[0];
-        }
-
-        currentFavIndex = favoriteIds.indexOf(Number(movieId));
-
-        try {
-            const res = await fetch(`/api/movies/${movieId}`);
-            if (!res.ok) throw new Error('게시글을 찾을 수 없습니다.');
-
-            currentMovie = await res.json();
-
-            document.getElementById('movieTitle').innerText = currentMovie.title;
-            document.getElementById('movieGenre').innerText = currentMovie.genre || '기타';
-            document.getElementById('movieWriter').innerText = currentMovie.writer;
-            document.getElementById('movieViews').innerText = currentMovie.views;
-            document.getElementById('movieLikes').innerText = currentMovie.likes || 0;
-            document.getElementById('movieContent').innerText = currentMovie.content;
-
-            // 즐겨찾기 상태 및 내비게이션 UI 업데이트
-            document.getElementById('favIndexText').innerText = `⭐ 즐겨찾기 감상평 (${currentFavIndex + 1} / ${favoriteIds.length})`;
-            
-            // 이전/다음 버튼 활성화 상태
-            document.getElementById('prevFavBtn').disabled = (currentFavIndex === 0);
-            document.getElementById('nextFavBtn').disabled = (currentFavIndex === favoriteIds.length - 1);
-
-            if (checkAdmin()) {
-                const hideBtn = document.getElementById('hideBtn');
-                hideBtn.style.display = 'inline-block';
-                hideBtn.innerText = currentMovie.isHidden ? '🔓 숨김 해제' : '🙈 숨김 처리';
             }
 
-        } catch (err) {
-            alert('즐겨찾기 게시글을 불러오는데 실패했습니다.');
-            window.location.href = 'index.html';
-        }
-    }
-
-    // ⭐ 즐겨찾기 해제 기능
-    function toggleFavorite() {
-        const idNum = Number(movieId);
-        favoriteIds = favoriteIds.filter(id => id !== idNum);
-        localStorage.setItem('favMovies', JSON.stringify(favoriteIds));
-        alert('즐겨찾기 목록에서 삭제되었습니다.');
-        loadFavoriteDetail();
-    }
-
-    // ⭐ 즐겨찾기 목록 이전/다음 이동
-    function navigateFav(direction) {
-        const newIndex = currentFavIndex + direction;
-        if (newIndex >= 0 && newIndex < favoriteIds.length) {
-            window.location.href = `detail.html?id=${favoriteIds[newIndex]}`;
-        }
-    }
-
-    // 👍 추천 기능
-    async function likeMovie() {
-        try {
-            const res = await fetch(`/api/movies/${movieId}/like`, { method: 'POST' });
-            const data = await res.json();
-            document.getElementById('movieLikes').innerText = data.likes;
-            alert('이 감상평을 추천했습니다! 👍');
-        } catch (err) {
-            alert('추천 처리 중 오류가 발생했습니다.');
-        }
-    }
-
-    function goEdit() {
-        window.location.href = `addForm.html?id=${movieId}`;
-    }
-
-    async function deleteMovie() {
-        if (!confirm('정말로 이 영화 감상평을 삭제하시겠습니까?')) return;
-
-        try {
-            const res = await fetch(`/api/movies/${movieId}`, { method: 'DELETE' });
-            if (res.ok) {
-                toggleFavorite(); // 즐겨찾기 목록에서도 함께 제외
-                alert('감상평이 삭제되었습니다.');
+            // 데이터가 있는 경우 화면 렌더링
+            if (movie) {
+                renderMovieDetail(movie);
             } else {
-                alert('삭제 실패');
+                renderNotFound();
             }
+
         } catch (err) {
-            alert('삭제 처리 오류');
+            console.error('영화 상세 로드 실패:', err);
+            renderNotFound();
         }
     }
 
-    async function toggleHide() {
-        const newStatus = currentMovie.isHidden ? 0 : 1;
-        try {
-            const res = await fetch(`/api/movies/${movieId}/hide`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isHidden: newStatus })
-            });
+    function renderMovieDetail(m) {
+        const posterUrl = m.poster_path 
+            ? `https://image.tmdb.org/t/p/w500${m.poster_path}` 
+            : 'https://via.placeholder.com/280x400/1e293b/f8fafc?text=No+Poster';
 
-            if (res.ok) {
-                alert(newStatus ? '게시글이 숨김 처리되었습니다.' : '숨김이 해제되었습니다.');
-                location.reload();
-            }
-        } catch (err) {
-            alert('오류 발생');
-        }
+        const genres = m.genres ? m.genres.map(g => g.name).join(', ') : '정보 없음';
+        const releaseDate = m.release_date || '정보 없음';
+        const voteAvg = m.vote_average ? m.vote_average.toFixed(1) : '0.0';
+        const overview = m.overview ? m.overview : '등록된 상세 줄거리 정보가 없습니다.';
+
+        document.getElementById('detailContent').innerHTML = `
+            <div class="poster-box">
+                <img src="${posterUrl}" alt="${m.title}" onerror="this.src='https://via.placeholder.com/280x400/1e293b/f8fafc?text=No+Poster'">
+            </div>
+            <div class="info-box">
+                <div>
+                    <div class="movie-header">
+                        <h1 class="movie-title">${m.title}</h1>
+                        ${m.tagline ? `<div class="movie-tagline">"${m.tagline}"</div>` : ''}
+                    </div>
+
+                    <div class="meta-list">
+                        <span class="meta-badge vote-badge">★ 평점 ${voteAvg}</span>
+                        <span class="meta-badge">📅 개봉일: ${releaseDate}</span>
+                        <span class="meta-badge">🎬 장르: ${genres}</span>
+                    </div>
+
+                    <div class="overview-box">
+                        <div class="overview-title">📖 줄거리</div>
+                        <div class="overview-text">${overview}</div>
+                    </div>
+                </div>
+
+                <div class="action-btns">
+                    <a href="index.html" class="btn btn-secondary">&larr; 목록으로</a>
+                    <a href="addForm.html?title=${encodeURIComponent(m.title)}" class="btn btn-primary">✍️ 이 영화 감상평 남기기</a>
+                </div>
+            </div>
+        `;
     }
 
-    window.onload = () => {
-        updateAdminBtn();
-        loadFavoriteDetail();
-    };
+    function renderNotFound() {
+        document.getElementById('detailContent').innerHTML = `
+            <div style="text-align:center; width:100%; padding:50px; color:var(--text-sub);">
+                <h2 style="color:var(--text-main); margin-bottom:10px;">🔍 영화 정보를 찾을 수 없습니다.</h2>
+                <p style="margin-bottom:20px;">요청하신 영화 정보가 존재하지 않거나 불러오지 못했습니다.</p>
+                <a href="index.html" class="btn btn-primary">메인으로 돌아가기</a>
+            </div>
+        `;
+    }
+
+    window.onload = fetchMovieDetails;
 </script>
 </body>
 </html>
