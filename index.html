@@ -14,9 +14,21 @@
             --accent-hover: #5b4bc4;
             --border-color: #334155;
             --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --warning-color: #f59e0b;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* 🔒 이용자의 drag 및 선택 금지 */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+
         body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding-bottom: 50px; }
 
         .navbar { background-color: var(--card-bg); display: flex; align-items: center; justify-content: space-between; padding: 15px 40px; border-bottom: 1px solid var(--border-color); }
@@ -52,6 +64,10 @@
         .api-movie-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
         .api-movie-vote { font-size: 12px; color: #f1c40f; margin-top: 4px; font-weight: bold; }
 
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .btn-danger { padding: 8px 14px; background-color: var(--danger-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+
         .search-box { margin-bottom: 30px; display: flex; gap: 10px; }
         .search-box select, .search-box input { padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); outline: none; font-size: 15px; }
         .search-box input { flex: 1; }
@@ -73,11 +89,10 @@
             transition: transform 0.2s, border-color 0.2s; 
             position: relative; 
             cursor: pointer; 
-            /* 긴 문자열 자동 줄바꿈 처리 */
             word-break: break-word; 
             overflow: hidden;
         }
-        .movie-card.hidden-card { opacity: 0.6; border-style: dashed; }
+        .movie-card.hidden-card { opacity: 0.55; border-style: dashed; border-color: var(--warning-color); }
         .movie-card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
 
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 10px; }
@@ -87,10 +102,26 @@
         .card-content { font-size: 14px; color: var(--text-sub); margin-bottom: 15px; display: -webkit-box; line-clamp: 2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; word-break: break-word; }
         .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-sub); }
         .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--text-sub); padding: 50px 0; }
-        .hidden-badge { color: var(--danger-color); font-size: 12px; font-weight: bold; }
+        
+        .admin-action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 4px;
+        }
+        .admin-action-btn:hover { background: var(--accent-color); }
+        .btn-hide-card { color: var(--warning-color); border-color: var(--warning-color); }
+        .btn-delete-card { color: var(--danger-color); border-color: var(--danger-color); }
+        .hidden-badge { color: var(--warning-color); font-size: 12px; font-weight: bold; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+
 <nav class="navbar">
     <div class="nav-left">
         <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
@@ -124,7 +155,11 @@
         <div class="api-movie-list" id="apiMovieList"></div>
     </div>
     
-    <h2 style="margin-bottom: 15px; font-size: 20px;">📝 등록된 영화 감상평 목록</h2>
+    <div class="section-header">
+        <h2 style="font-size: 20px;">📝 등록된 영화 감상평 목록</h2>
+        <button id="deleteAllBtn" class="btn-danger" style="display:none;" onclick="deleteAllMovies()">🗑️ 감상평 전체 삭제</button>
+    </div>
+
     <div class="search-box">
         <select id="genreSelect" onchange="renderList()">
             <option value="">전체 장르</option>
@@ -143,9 +178,32 @@
 </div>
 
 <script>
-    // 🔑 관리자 아이디 및 비밀번호 설정
-    const ADMIN_ID = "admin";
-    const ADMIN_PW = "1234";
+    // 🔒 [보안] 소스 보기 및 개발자 도구 단축키 차단
+    document.addEventListener('keydown', function(e) {
+        // F12 차단
+        if (e.keyCode === 123) {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl + Shift + I, J, C 차단
+        if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl + U (소스 보기) 차단
+        if (e.ctrlKey && e.keyCode === 85) {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl + S (저장) 차단
+        if (e.ctrlKey && e.keyCode === 83) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    const ADMIN_ID = "hyunsik";
+    const ADMIN_PW = "7356";
 
     function checkAdmin() {
         return localStorage.getItem('isAdmin') === 'true';
@@ -153,12 +211,16 @@
 
     function updateAdminBtn() {
         const btn = document.getElementById('adminToggleBtn');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+        
         if (checkAdmin()) {
             btn.innerText = "🔓 관리자 로그아웃";
             btn.classList.add('active');
+            if (deleteAllBtn) deleteAllBtn.style.display = 'inline-block';
         } else {
             btn.innerText = "🔒 관리자 로그인";
             btn.classList.remove('active');
+            if (deleteAllBtn) deleteAllBtn.style.display = 'none';
         }
     }
 
@@ -174,7 +236,6 @@
             const inputPw = prompt("관리자 비밀번호를 입력하세요:");
             if (inputPw === null) return;
 
-            // 직접 검증 로직
             if (inputId.trim() === ADMIN_ID && inputPw.trim() === ADMIN_PW) {
                 localStorage.setItem('isAdmin', 'true');
                 alert('관리자 로그인 성공!');
@@ -183,6 +244,65 @@
             } else {
                 alert('아이디 또는 비밀번호가 올바르지 않습니다.');
             }
+        }
+    }
+
+    // 🙈/👁️ 숨김 토글 함수
+    async function toggleHideMovie(event, id, currentStatus) {
+        event.stopPropagation(); // 카드 클릭 시 상세 이동 차단
+
+        try {
+            const res = await fetch(`/api/movies/${id}/toggle-hide`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isHidden: !currentStatus })
+            });
+            if (res.ok) {
+                renderList();
+            } else {
+                alert('숨김 상태 변경에 실패했습니다.');
+            }
+        } catch (err) {
+            console.error('숨김 요청 오류:', err);
+            alert('서버 통신 실패');
+        }
+    }
+
+    // 🗑️ 개별 삭제 함수
+    async function deleteSingleMovie(event, id) {
+        event.stopPropagation();
+
+        if (!confirm('정말로 이 감상평을 삭제하시겠습니까?')) return;
+
+        try {
+            const res = await fetch(`/api/movies/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                alert('감상평이 삭제되었습니다.');
+                renderList();
+            } else {
+                alert('삭제 실패');
+            }
+        } catch (err) {
+            console.error('삭제 요청 중 오류:', err);
+            alert('서버와 통신할 수 없습니다.');
+        }
+    }
+
+    // 🗑️ 전체 삭제 함수
+    async function deleteAllMovies() {
+        if (!confirm('⚠️ 경고: 등록된 전체 감상평을 모두 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.')) return;
+
+        try {
+            const res = await fetch('/api/movies', { method: 'DELETE' });
+            if (res.ok) {
+                alert('전체 감상평이 모두 삭제되었습니다.');
+                renderList();
+            } else {
+                alert('전체 삭제 실패');
+            }
+        } catch (err) {
+            console.error('전체 삭제 오류:', err);
+            alert('서버 삭제 실패');
         }
     }
 
@@ -235,6 +355,16 @@
                 card.onclick = () => { window.location.href = `detail.html?id=${m.id}`; };
 
                 const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : '2026. 08. 04';
+                
+                // 관리자에게만 제어 버튼 노출
+                let adminBtnsHtml = '';
+                if (isAdmin) {
+                    const hideText = m.isHidden ? '👁️ 노출' : '🙈 숨김';
+                    adminBtnsHtml = `
+                        <button class="admin-action-btn btn-hide-card" onclick="toggleHideMovie(event, '${m.id}', ${!!m.isHidden})">${hideText}</button>
+                        <button class="admin-action-btn btn-delete-card" onclick="deleteSingleMovie(event, '${m.id}')">🗑️ 삭제</button>
+                    `;
+                }
 
                 card.innerHTML = `
                     <div>
@@ -243,13 +373,13 @@
                             <span class="genre-badge">${m.genre || '기타'}</span>
                         </div>
                         <div class="card-info">
-                            <span>✍️ ${m.writer} ${m.isHidden ? '<span class="hidden-badge">[숨김]</span>' : ''}</span>
+                            <span>✍️ ${m.writer} ${m.isHidden ? '<span class="hidden-badge">[숨겨짐]</span>' : ''} ${adminBtnsHtml}</span>
                             <span>📅 ${dateStr}</span>
                         </div>
                         <div class="card-content">${m.content || '등록된 감상평이 없습니다.'}</div>
                     </div>
                     <div class="card-footer">
-                        <span>👁️ ${m.views}회 | 👍 ${m.likes || 0}</span>
+                        <span>👁️ ${m.views || 0}회 | 👍 ${m.likes || 0}</span>
                         <span style="color:var(--accent-color); font-weight:bold;">감상평 읽기 &rarr;</span>
                     </div>
                 `;
