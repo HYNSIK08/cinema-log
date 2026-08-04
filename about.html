@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>사이트 소개 - 시네마 로그</title>
+    <title>시네마 로그 - 메인페이지</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -11,24 +11,79 @@
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --accent-color: #6c5ce7;
+            --accent-hover: #5b4bc4;
             --border-color: #334155;
+            --danger-color: #ef4444;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding-bottom: 50px; }
 
-        .navbar { background-color: var(--card-bg); display: flex; align-items: center; padding: 15px 40px; border-bottom: 1px solid var(--border-color); }
+        .navbar { background-color: var(--card-bg); display: flex; align-items: center; justify-content: space-between; padding: 15px 40px; border-bottom: 1px solid var(--border-color); }
         .nav-left { display: flex; align-items: center; gap: 30px; }
         .navbar-brand { font-size: 20px; font-weight: bold; color: var(--text-main); text-decoration: none; }
         .nav-menu { list-style: none; display: flex; gap: 20px; align-items: center; }
         .nav-menu a { color: var(--text-sub); text-decoration: none; font-weight: bold; transition: 0.2s; }
         .nav-menu a:hover, .nav-menu a.active { color: var(--accent-color); }
 
-        .container { max-width: 700px; margin: 50px auto; background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); }
-        h1 { color: var(--text-main); border-bottom: 2px solid var(--accent-color); padding-bottom: 12px; margin-bottom: 20px; }
-        p { line-height: 1.8; color: var(--text-sub); font-size: 15px; }
-        .feature-box { background: #0f172a; border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; margin-top: 20px; }
-        .feature-box h3 { margin-bottom: 12px; color: var(--text-main); }
-        .feature-box ul { padding-left: 20px; color: var(--text-sub); line-height: 1.8; }
+        .admin-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: var(--text-sub); cursor: pointer; font-size: 13px; font-weight: bold; }
+        .admin-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .hero-banner { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid var(--border-color); border-left: 5px solid var(--accent-color); padding: 30px; border-radius: 12px; margin-bottom: 30px; }
+        .hero-banner h1 { color: var(--text-main); margin-bottom: 10px; font-size: 26px; }
+        .hero-banner p { color: var(--text-sub); font-size: 15px; }
+
+        /* 검색 및 필터 영역 */
+        .search-box { margin-bottom: 30px; display: flex; gap: 10px; }
+        .search-box select, .search-box input { padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); outline: none; font-size: 15px; }
+        .search-box input { flex: 1; }
+        .search-box select:focus, .search-box input:focus { border-color: var(--accent-color); }
+        
+        .btn { padding: 12px 20px; background-color: var(--accent-color); color: white; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn:hover { background-color: var(--accent-hover); }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        
+        .movie-card { 
+            background-color: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            transition: transform 0.2s, border-color 0.2s; 
+            position: relative; 
+            cursor: pointer; 
+        }
+        .movie-card.hidden-card { opacity: 0.6; border-style: dashed; }
+        .movie-card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .card-title { font-size: 18px; font-weight: bold; color: var(--text-main); text-decoration: none; }
+        
+        .genre-badge { background: #0f172a; border: 1px solid var(--border-color); color: var(--accent-color); font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
+        
+        .card-info { font-size: 13px; color: var(--text-sub); margin-bottom: 10px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+        
+        .card-content { 
+            font-size: 14px; 
+            color: var(--text-sub); 
+            margin-bottom: 15px; 
+            display: -webkit-box; 
+            line-clamp: 2;
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            line-height: 1.5; 
+        }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-sub); }
+        
+        .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--text-sub); padding: 50px 0; }
+        .hidden-badge { color: var(--danger-color); font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -36,25 +91,170 @@
     <div class="nav-left">
         <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
         <ul class="nav-menu">
-            <li><a href="index.html">메인</a></li>
-            <li><a href="about.html" class="active">사이트 소개</a></li>
+            <li><a href="index.html" class="active">메인</a></li>
+            <li><a href="about.html">사이트 소개</a></li>
+            <li><a href="#" id="recentDetailNav">상세 페이지</a></li>
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
+    </div>
+    <div>
+        <button id="adminToggleBtn" class="admin-btn" onclick="toggleAdmin()">🔒 관리자 로그인</button>
     </div>
 </nav>
 
 <div class="container">
-    <h1>📌 시네마 로그 소개</h1>
-    <p><strong>시네마 로그(Cinema Log)</strong>는 당신이 감상한 영화의 감동과 여운을 간편하게 기록하고 정리할 수 있는 개인 영화 기록 웹 서비스입니다.</p>
-    <div class="feature-box">
-        <h3>주요 기능</h3>
-        <ul>
-            <li><strong>영화 기록:</strong> 영화 제목, 작성자, 감상평 등록</li>
-            <li><strong>실시간 검색:</strong> 영화 제목 키워드로 데이터베이스 통합 검색</li>
-            <li><strong>상세보기 및 수정/삭제:</strong> REST API 기반 데이터 관리</li>
-            <li><strong>영구 저장:</strong> Node.js와 SQLite DB를 통한 서버 데이터 지속성</li>
-        </ul>
+    <div class="hero-banner">
+        <h1>나만의 영화 감상 기록 공간</h1>
+        <p>장르별 검색, 추천 기능 및 자유로운 감상평 다크 갤러리</p>
     </div>
+    
+    <div class="search-box">
+        <select id="genreSelect" onchange="renderList()">
+            <option value="">전체 장르</option>
+            <option value="액션">액션</option>
+            <option value="드라마">드라마</option>
+            <option value="코미디">코미디</option>
+            <option value="SF/판타지">SF/판타지</option>
+            <option value="스릴러/공포">스릴러/공포</option>
+            <option value="기타">기타</option>
+        </select>
+        <input type="text" id="searchInput" placeholder="영화 제목으로 검색..." onkeyup="renderList()">
+        <button type="button" class="btn" onclick="renderList()">검색</button>
+    </div>
+
+    <div class="grid-container" id="movieGrid"></div>
 </div>
+
+<script>
+    // 관리자 계정 정보 설정
+    const ADMIN_ID = "HYUNSIK";
+    const ADMIN_PW = "087356";
+
+    function checkAdmin() {
+        return localStorage.getItem('isAdmin') === 'true';
+    }
+
+    function updateAdminBtn() {
+        const btn = document.getElementById('adminToggleBtn');
+        if (checkAdmin()) {
+            btn.innerText = "🔓 관리자 로그아웃";
+            btn.classList.add('active');
+        } else {
+            btn.innerText = "🔒 관리자 로그인";
+            btn.classList.remove('active');
+        }
+    }
+
+    // 🌟 관리자 아이디 / 비밀번호 인증 추가
+    function toggleAdmin() {
+        if (checkAdmin()) {
+            // 이미 관리자인 경우 -> 로그아웃
+            localStorage.setItem('isAdmin', 'false');
+            alert('관리자 모드에서 로그아웃했습니다.');
+        } else {
+            // 관리자가 아닌 경우 -> 아이디 및 비밀번호 검증
+            const inputId = prompt("관리자 아이디를 입력하세요:");
+            if (inputId === null) return; // 취소 누름
+
+            const inputPw = prompt("관리자 비밀번호를 입력하세요:");
+            if (inputPw === null) return; // 취소 누름
+
+            if (inputId === ADMIN_ID && inputPw === ADMIN_PW) {
+                localStorage.setItem('isAdmin', 'true');
+                alert('관리자 인증에 성공했습니다!');
+            } else {
+                alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+                return;
+            }
+        }
+        updateAdminBtn();
+        renderList();
+    }
+
+    async function initDetailMenu() {
+        const isAdmin = checkAdmin();
+        const detailNav = document.getElementById('recentDetailNav');
+        try {
+            const res = await fetch(`/api/movies?isAdmin=${isAdmin}`);
+            const movies = await res.json();
+            if (movies && movies.length > 0) {
+                movies.sort((a, b) => b.id - a.id);
+                detailNav.href = `detail.html?id=${movies[0].id}`;
+            } else {
+                detailNav.onclick = (e) => {
+                    e.preventDefault();
+                    alert('등록된 영화 감상평이 없습니다. 먼저 새 감상평을 등록해주세요!');
+                };
+            }
+        } catch (err) {
+            console.error('메뉴 로드 실패:', err);
+        }
+    }
+
+    async function renderList() {
+        const keyword = document.getElementById('searchInput').value;
+        const genre = document.getElementById('genreSelect').value;
+        const isAdmin = checkAdmin();
+        const grid = document.getElementById('movieGrid');
+
+        try {
+            const response = await fetch(`/api/movies?search=${encodeURIComponent(keyword)}&genre=${encodeURIComponent(genre)}&isAdmin=${isAdmin}`);
+            let movies = await response.json();
+            grid.innerHTML = '';
+            
+            if (movies.length === 0) {
+                grid.innerHTML = '<div class="empty-msg">등록된 영화 감상평이 없습니다.</div>';
+                return;
+            }
+
+            movies.sort((a, b) => {
+                if (a.createdAt && b.createdAt) {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                }
+                return b.id - a.id;
+            });
+
+            movies.forEach((m) => {
+                const card = document.createElement('div');
+                card.className = `movie-card ${m.isHidden ? 'hidden-card' : ''}`;
+                
+                card.onclick = () => {
+                    window.location.href = `detail.html?id=${m.id}`;
+                };
+
+                const dateStr = m.createdAt 
+                    ? new Date(m.createdAt).toLocaleDateString('ko-KR') 
+                    : (m.date || '2026. 08. 04');
+
+                card.innerHTML = `
+                    <div>
+                        <div class="card-header">
+                            <span class="card-title">${m.title}</span>
+                            <span class="genre-badge">${m.genre || '기타'}</span>
+                        </div>
+                        <div class="card-info">
+                            <span>✍️ ${m.writer} ${m.isHidden ? '<span class="hidden-badge">[숨김]</span>' : ''}</span>
+                            <span>📅 ${dateStr}</span>
+                        </div>
+                        <div class="card-content">${m.content || '등록된 감상평이 없습니다.'}</div>
+                    </div>
+                    <div class="card-footer">
+                        <span>👁️ ${m.views}회 | 👍 ${m.likes || 0}</span>
+                        <span style="color:var(--accent-color); font-weight:bold;">감상평 읽기 &rarr;</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        } catch (error) {
+            console.error("데이터 로드 실패:", error);
+        }
+    }
+
+    window.onload = () => {
+        updateAdminBtn();
+        renderList();
+        initDetailMenu();
+    };
+</script>
 </body>
 </html>
