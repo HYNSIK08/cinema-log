@@ -270,25 +270,25 @@
                 id: 1022789, 
                 title: "인사이드 아웃 2", 
                 vote: "8.5", 
-                img: "./image/insideout2.jpg" 
+                img: "./public/image/insideout2.jpg" 
             },
             { 
                 id: 934632, 
                 title: "파묘", 
                 vote: "8.2", 
-                img: "./image/pamyo.jpg" 
+                img: "./public/image/pamyo.jpg" 
             },
             { 
                 id: 1011985, 
                 title: "범죄도시 4", 
                 vote: "7.8", 
-                img: "./image/crimecity4.jpg" 
+                img: "./public/image/crimecity4.jpg" 
             },
             { 
                 id: 76600, 
                 title: "아바타: 물의 길", 
                 vote: "8.8", 
-                img: "./image/avatar2.jpg" 
+                img: "./public/image/avatar2.jpg" 
             }
         ];
 
@@ -385,12 +385,14 @@
         }
     }
 
-    window.onload = () => {
-        updateAdminBtn();
-        fetchApiMovies();
-        renderList();
-        initDetailMenu();
-    };
+   window.onload = () => {
+    updateAdminBtn();
+    // fetchApiMovies(); 대신 아래 백업 함수를 바로 실행
+    const apiContainer = document.getElementById('apiMovieList');
+    if (apiContainer) renderBackupMovies(apiContainer);
+    renderList();
+    initDetailMenu();
+};
 </script>
 </body>
 </html>
