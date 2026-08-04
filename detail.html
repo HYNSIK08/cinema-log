@@ -96,40 +96,39 @@
 <script>
     const TMDB_API_KEY = 'f97987814400762f02f8373b5a1b32d2';
 
-    // URL 파라미터 가져오기 (id: 자체 작성 감상평 ID / movieId: TMDB ID / title: 영화 제목)
     const urlParams = new URLSearchParams(window.location.search);
     const reviewId = urlParams.get('id'); 
     const apiMovieId = urlParams.get('movieId');
     const movieTitle = urlParams.get('title');
+
+    // API 통신 실패 시 사용할 예비 상세 데이터 맵핑
+    const FALLBACK_MOVIES = {
+        "1022789": { title: "인사이드 아웃 2", vote_average: 8.5, release_date: "2024-06-12", genres: [{name: "애니메이션"}, {name: "모험"}], overview: "13살이 된 라일리의 머릿속 감정 컨트롤 본부. 새로운 감정들('불안', '당황', '따분', '부러움')이 눈을 뜨고, 기존 감정들과 갈등을 빚기 시작한다.", tagline: "괜찮아, 모든 것이 다 변해도!" },
+        "934632": { title: "파묘", vote_average: 8.2, release_date: "2024-02-22", genres: [{name: "공포"}, {name: "미스터리"}], overview: "거액의 돈을 받고 수상한 묘를 이장한 무당과 장의사, 풍수사들에게 일어나는 기이한 사건을 그린 영화.", tagline: "여권이 상했다, 아니 자리가 나쁘다." },
+        "1011985": { title: "범죄도시 4", vote_average: 7.8, release_date: "2024-04-24", genres: [{name: "범죄"}, {name: "액션"}], overview: "괴물형사 마석도가 대규모 온라인 불법 도박 조직을 움직이는 특수부대 용병 출신 백창기와 IT 업계 천재 CEO 장동철을 소탕하기 위해 나선다.", tagline: "법은 그들을 못 막아, 우리가 잡는다!" },
+        "76600": { title: "아바타: 물의 길", vote_average: 8.8, release_date: "2022-12-14", genres: [{name: "SF"}, {name: "모험"}], overview: "제이크 설리와 네이티리가 이룬 가족이 겪는 무서운 이야기와 살아남기 위한 고군분투, 그리고 겪어내야 할 상처에 대한 이야기.", tagline: "이것은 새로운 길의 시작이다." }
+    };
 
     function checkAdmin() {
         return localStorage.getItem('isAdmin') === 'true';
     }
 
     async function loadPageData() {
-        // 1. 등록된 게시물 감상평 조회 (id 파라미터가 있을 때)
         if (reviewId) {
             await fetchUserReview(reviewId);
-        } 
-        // 2. 외부 API 영화 상세 조회 (movieId 또는 title 파라미터가 있을 때)
-        else if (apiMovieId || movieTitle) {
+        } else if (apiMovieId || movieTitle) {
             await fetchApiMovieDetails();
-        } 
-        // 3. 파라미터가 없으면 에러 표기
-        else {
+        } else {
             renderNotFound();
         }
     }
 
-    // 📝 [유형 1] 사용자가 직접 등록한 감상평 게시물 로드
     async function fetchUserReview(id) {
         try {
             const isAdmin = checkAdmin();
             const res = await fetch(`/api/movies/${id}?isAdmin=${isAdmin}`);
-            
             if (!res.ok) throw new Error('게시글을 찾을 수 없습니다.');
             const data = await res.json();
-            
             renderUserReview(data);
         } catch (err) {
             console.error('감상평 로드 에러:', err);
@@ -137,40 +136,53 @@
         }
     }
 
-    // 🎬 [유형 2] TMDB API 외부 영화 상세 로드
     async function fetchApiMovieDetails() {
         try {
             let movie = null;
 
+            // 1. API ID 기반 조회 시도
             if (apiMovieId) {
                 const res = await fetch(`https://api.themoviedb.org/3/movie/${apiMovieId}?api_key=${TMDB_API_KEY}&language=ko-KR`);
                 if (res.ok) movie = await res.json();
             } 
             
+            // 2. 제목 기반 검색 시도
             if (!movie && movieTitle) {
                 const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ko-KR&query=${encodeURIComponent(movieTitle)}`);
                 const data = await res.json();
                 if (data.results && data.results.length > 0) {
-                    // 검색된 결과 중 가장 상위 영화의 상세 정보를 다시 조회 (tagline, runtime 등 확보)
                     const detailRes = await fetch(`https://api.themoviedb.org/3/movie/${data.results[0].id}?api_key=${TMDB_API_KEY}&language=ko-KR`);
                     if (detailRes.ok) movie = await detailRes.json();
                     else movie = data.results[0];
                 }
             }
 
+            // 3. 만약 API 조회마저 실패했다면 백업 데이터 맵에서 찾아보기
+            if (!movie && apiMovieId && FALLBACK_MOVIES[apiMovieId]) {
+                movie = FALLBACK_MOVIES[apiMovieId];
+            } else if (!movie && movieTitle) {
+                // 제목이 일치하는 백업 데이터가 있는지 확인
+                const foundKey = Object.keys(FALLBACK_MOVIES).find(k => FALLBACK_MOVIES[k].title === movieTitle);
+                if (foundKey) movie = FALLBACK_MOVIES[foundKey];
+            }
+
             if (movie) {
                 renderApiMovieDetail(movie);
             } else {
-                renderNotFound('영화 API 정보를 가져올 수 없습니다.');
+                renderNotFound('영화 정보를 가져올 수 없습니다.');
             }
 
         } catch (err) {
-            console.error('API 상세 로드 에러:', err);
-            renderNotFound('서버 통신 중 문제가 발생했습니다.');
+            console.error('API 상세 로드 에러, 백업 데이터로 전환 시도:', err);
+            // 예외 발생 시 백업 데이터 확인
+            if (apiMovieId && FALLBACK_MOVIES[apiMovieId]) {
+                renderApiMovieDetail(FALLBACK_MOVIES[apiMovieId]);
+            } else {
+                renderNotFound('서버 통신 중 문제가 발생했습니다.');
+            }
         }
     }
 
-    // 🎨 [뷰 렌더링 1] 사용자가 작성한 감상평 렌더링
     function renderUserReview(m) {
         const dateStr = m.createdAt 
             ? new Date(m.createdAt).toLocaleDateString('ko-KR') 
@@ -208,11 +220,10 @@
         `;
     }
 
-    // 🎨 [뷰 렌더링 2] API 외부 영화 상세 렌더링
     function renderApiMovieDetail(m) {
         const posterUrl = m.poster_path 
             ? `https://image.tmdb.org/t/p/w500${m.poster_path}` 
-            : 'https://via.placeholder.com/280x400/1e293b/f8fafc?text=No+Poster';
+            : `https://via.placeholder.com/280x400/1e293b/f8fafc?text=${encodeURIComponent(m.title)}`;
 
         const genres = m.genres ? m.genres.map(g => g.name).join(', ') : '정보 없음';
         const releaseDate = m.release_date || '정보 없음';
@@ -250,7 +261,6 @@
         `;
     }
 
-    // ⚠️ 찾을 수 없을 때의 렌더링
     function renderNotFound(message = '요청하신 영화 정보가 존재하지 않거나 불러오지 못했습니다.') {
         document.getElementById('detailContent').innerHTML = `
             <div style="text-align:center; width:100%; padding:50px; color:var(--text-sub);">
@@ -261,20 +271,18 @@
         `;
     }
 
-    // 👍 감상평 좋아요 기능
     async function likeReview(id) {
         try {
             const res = await fetch(`/api/movies/${id}/like`, { method: 'POST' });
             if (res.ok) {
                 alert('추천되었습니다!');
-                fetchUserReview(id); // 화면 새로고침
+                fetchUserReview(id);
             }
         } catch (err) {
             alert('좋아요 처리 중 오류가 발생했습니다.');
         }
     }
 
-    // 🗑️ 감상평 삭제 기능 (관리자 전용)
     async function deleteReview(id) {
         if (!confirm('정말 이 감상평을 삭제하시겠습니까?')) return;
         try {
