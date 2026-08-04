@@ -25,19 +25,32 @@
         .nav-menu a { color: var(--text-sub); text-decoration: none; font-weight: bold; transition: 0.2s; }
         .nav-menu a:hover, .nav-menu a.active { color: var(--accent-color); }
 
-        .container { max-width: 650px; margin: 50px auto; background: var(--card-bg); padding: 35px; border-radius: 12px; border: 1px solid var(--border-color); }
-        .title-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; margin-bottom: 15px; }
-        h2 { color: var(--text-main); }
+        .container { max-width: 700px; margin: 40px auto; background: var(--card-bg); padding: 35px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .title-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent-color); padding-bottom: 12px; margin-bottom: 15px; }
+        .title-left { display: flex; align-items: center; gap: 10px; }
+        h2 { color: var(--text-main); font-size: 24px; }
         .genre-tag { background: var(--accent-color); color: white; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
         
-        .info { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: var(--text-sub); display: flex; gap: 20px; border: 1px solid var(--border-color); font-size: 14px; }
-        .content-box { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); line-height: 1.7; min-height: 120px; white-space: pre-wrap; margin-bottom: 20px; }
+        .bookmark-btn { background: none; border: 1px solid var(--border-color); color: #f1c40f; font-size: 18px; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
+        .bookmark-btn:hover { background: rgba(241, 196, 15, 0.1); }
 
-        .like-section { text-align: center; margin-bottom: 25px; }
-        .btn-like { padding: 10px 24px; background-color: #0f172a; color: #f1c40f; border: 1px solid #f1c40f; border-radius: 20px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
+        .info { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: var(--text-sub); display: flex; gap: 20px; border: 1px solid var(--border-color); font-size: 14px; }
+        .content-box { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); line-height: 1.7; min-height: 140px; white-space: pre-wrap; margin-bottom: 25px; }
+
+        .like-section { text-align: center; margin-bottom: 30px; }
+        .btn-like { padding: 10px 24px; background-color: #0f172a; color: #f1c40f; border: 1px solid #f1c40f; border-radius: 20px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
         .btn-like:hover { background-color: #f1c40f; color: #0f172a; }
 
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        /* 연관 감상평 영역 */
+        .related-section { margin-top: 35px; padding-top: 25px; border-top: 1px solid var(--border-color); }
+        .related-section h3 { font-size: 18px; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .related-list { display: flex; flex-direction: column; gap: 10px; }
+        .related-item { background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: var(--text-main); transition: 0.2s; }
+        .related-item:hover { border-color: var(--accent-color); transform: translateX(4px); }
+        .related-item .rel-title { font-weight: bold; font-size: 15px; }
+        .related-item .rel-meta { font-size: 12px; color: var(--text-sub); }
+
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 25px; }
         .btn { padding: 10px 18px; color: white; text-decoration: none; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
         .btn-list { background-color: #475569; }
         .btn-edit { background-color: var(--accent-color); }
@@ -62,20 +75,31 @@
 
 <div class="container">
     <div class="title-area">
-        <h2 id="movieTitle"></h2>
-        <span class="genre-tag" id="movieGenre"></span>
+        <div class="title-left">
+            <h2 id="movieTitle">로딩 중...</h2>
+            <span class="genre-tag" id="movieGenre">-</span>
+        </div>
+        <button id="bookmarkBtn" class="bookmark-btn" onclick="toggleBookmark()">☆ 즐겨찾기</button>
     </div>
     
     <div class="info">
         <div>✍️ 작성자: <span id="movieWriter" style="color:var(--text-main);"></span></div>
-        <div>👁️ 조회수: <span id="movieViews" style="color:var(--text-main);"></span></div>
-        <div>👍 추천수: <span id="movieLikes" style="color:var(--text-main);"></span></div>
+        <div>👁️ 조회수: <span id="movieViews" style="color:var(--text-main);">0</span></div>
+        <div>👍 추천수: <span id="movieLikes" style="color:var(--text-main);">0</span></div>
     </div>
     
     <div class="content-box" id="movieContent"></div>
 
     <div class="like-section">
         <button type="button" class="btn-like" onclick="likeMovie()">👍 이 감상평 추천하기</button>
+    </div>
+
+    <!-- 같은 영화/같은 장르 연관 감상평 영역 -->
+    <div class="related-section">
+        <h3>🎬 관련 영화/장르 추천 기록</h3>
+        <div class="related-list" id="relatedList">
+            <div style="color:var(--text-sub); font-size:14px;">연관 기록을 불러오는 중...</div>
+        </div>
     </div>
 
     <div class="btn-group">
@@ -91,38 +115,132 @@
     const urlParams = new URLSearchParams(window.location.search);
     const movieId = urlParams.get('id');
     let currentIsHidden = 0;
+    let currentMovie = null;
 
     function checkAdmin() {
         return localStorage.getItem('isAdmin') === 'true';
     }
 
-    async function loadDetail() {
+    // 즐겨찾기 목록 불러오기 (localStorage 활용)
+    function getBookmarks() {
+        return JSON.parse(localStorage.getItem('cinema_bookmarks') || '[]');
+    }
+
+    // 즐겨찾기 버튼 상태 업데이트
+    function updateBookmarkBtn() {
+        const bookmarks = getBookmarks();
+        const btn = document.getElementById('bookmarkBtn');
+        if (bookmarks.includes(String(movieId))) {
+            btn.innerText = '★ 즐겨찾기됨';
+            btn.style.borderColor = '#f1c40f';
+            btn.style.background = 'rgba(241, 196, 15, 0.2)';
+        } else {
+            btn.innerText = '☆ 즐겨찾기';
+            btn.style.borderColor = 'var(--border-color)';
+            btn.style.background = 'none';
+        }
+    }
+
+    // 즐겨찾기 토글
+    function toggleBookmark() {
         if (!movieId) return;
+        let bookmarks = getBookmarks();
+        const strId = String(movieId);
+        
+        if (bookmarks.includes(strId)) {
+            bookmarks = bookmarks.filter(id => id !== strId);
+            alert('즐겨찾기에서 해제되었습니다.');
+        } else {
+            bookmarks.push(strId);
+            alert('즐겨찾기에 추가되었습니다!');
+        }
+        
+        localStorage.setItem('cinema_bookmarks', JSON.stringify(bookmarks));
+        updateBookmarkBtn();
+    }
+
+    // 상세페이지 데이터 로드
+    async function loadDetail() {
+        if (!movieId) {
+            alert('잘못된 접근입니다.');
+            window.location.href = 'index.html';
+            return;
+        }
+
         try {
             const response = await fetch(`/api/movies/${movieId}`);
             if (response.ok) {
-                const movie = await response.json();
-                document.getElementById('movieTitle').innerText = movie.title;
-                document.getElementById('movieGenre').innerText = movie.genre || '기타';
-                document.getElementById('movieWriter').innerText = movie.writer;
-                document.getElementById('movieViews').innerText = movie.views;
-                document.getElementById('movieLikes').innerText = movie.likes || 0;
-                document.getElementById('movieContent').innerText = movie.content;
-                document.getElementById('editBtn').href = `editForm.html?id=${movie.id}`;
+                currentMovie = await response.json();
                 
-                currentIsHidden = movie.isHidden;
+                document.getElementById('movieTitle').innerText = currentMovie.title;
+                document.getElementById('movieGenre').innerText = currentMovie.genre || '기타';
+                document.getElementById('movieWriter').innerText = currentMovie.writer;
+                document.getElementById('movieViews').innerText = currentMovie.views;
+                document.getElementById('movieLikes').innerText = currentMovie.likes || 0;
+                document.getElementById('movieContent').innerText = currentMovie.content;
+                document.getElementById('editBtn').href = `editForm.html?id=${currentMovie.id}`;
+                
+                currentIsHidden = currentMovie.isHidden;
                 const hideBtn = document.getElementById('hideBtn');
                 hideBtn.innerText = currentIsHidden ? "숨김 해제 (관리자)" : "게시글 숨기기 (관리자)";
 
                 if (checkAdmin()) {
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
                 }
+
+                updateBookmarkBtn();
+                loadRelatedMovies(currentMovie.title, currentMovie.genre, currentMovie.id);
+            } else {
+                alert('해당 감상평을 찾을 수 없습니다.');
+                window.location.href = 'index.html';
             }
         } catch (error) {
             console.error('로드 실패:', error);
         }
     }
 
+    // 동일한 영화 제목 또는 장르를 공유하는 연관 글 찾기
+    async function loadRelatedMovies(title, genre, currentId) {
+        const relatedListEl = document.getElementById('relatedList');
+        try {
+            const res = await fetch(`/api/movies?isAdmin=${checkAdmin()}`);
+            if (res.ok) {
+                const allMovies = await res.json();
+                
+                // 현재 글 제외 + 제목이 같거나 장르가 같은 글 필터링
+                const related = allMovies.filter(m => 
+                    String(m.id) !== String(currentId) && 
+                    (m.title === title || (genre && m.genre === genre))
+                );
+
+                relatedListEl.innerHTML = '';
+                if (related.length === 0) {
+                    relatedListEl.innerHTML = '<div style="color:var(--text-sub); font-size:14px;">연관된 다른 감상평이 없습니다.</div>';
+                    return;
+                }
+
+                related.slice(0, 5).forEach(item => {
+                    const matchType = item.title === title ? '🎬 동일 제목' : '🏷️ 동일 장르';
+                    const a = document.createElement('a');
+                    a.className = 'related-item';
+                    a.href = `detail.html?id=${item.id}`;
+                    a.innerHTML = `
+                        <div>
+                            <span class="rel-title">${item.title}</span> 
+                            <span style="font-size:12px; color:var(--accent-color); margin-left:6px;">[${matchType}]</span>
+                        </div>
+                        <div class="rel-meta">✍️ ${item.writer} | 👍 ${item.likes || 0}</div>
+                    `;
+                    relatedListEl.appendChild(a);
+                });
+            }
+        } catch (err) {
+            console.error('연관 글 로드 실패:', err);
+            relatedListEl.innerHTML = '<div style="color:var(--text-sub); font-size:14px;">연관 글을 불러오지 못했습니다.</div>';
+        }
+    }
+
+    // 추천(좋아요) 처리
     async function likeMovie() {
         try {
             const response = await fetch(`/api/movies/${movieId}/like`, { method: 'POST' });
@@ -164,8 +282,17 @@
             }
         }
     }
+    <div class="btn-group">
+        <a href="index.html" class="btn btn-list">목록으로</a>
+        <a id="editBtn" class="btn btn-edit">수정</a>
+        <button type="button" id="hideBtn" class="btn btn-hide admin-only" onclick="toggleHide()"></button>
+        <button type="button" class="btn btn-delete admin-only" onclick="deleteMovie()">삭제 (관리자)</button>
+    </div>
+    
 
     window.onload = loadDetail;
+    
 </script>
+<script src="detail.js"></script>
 </body>
 </html>
