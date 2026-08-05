@@ -228,6 +228,30 @@ async function deleteMovie() {
         }
     }
 }
+function deleteMovie() {
+    if (!checkAdmin()) return alert('관리자 권한이 필요합니다.');
 
-// 페이지 로드 시 진입점
+    if (confirm("정말 삭제하시겠습니까?")) {
+        fetch(`/api/movies/${movieId}`, {
+            method: 'DELETE'
+        })
+        .then(res => {
+            if (res.ok) {
+                alert("삭제되었습니다.");
+                location.href = "index.html";
+            } else {
+                alert("삭제 실패");
+            }
+        });
+    }
+}
+
+
+function editMovie(id) {
+    location.href = `addForm.html?id=${id}`;
+}
+
+
+
+
 window.onload = loadDetail;

@@ -263,11 +263,25 @@
             `;
         }
 
-        const actionButtonsHtml = isTmdb ? `
-            <span style="color: #f1c40f; font-weight: bold; font-size: 15px;">★ TMDB 평점: ${movie.vote ? movie.vote.toFixed(1) : 'N/A'}</span>
-        ` : `
-            <button class="btn btn-secondary" onclick="likeMovie('${movie.id}')">👍 추천하기</button>
-        `;
+     const actionButtonsHtml = isTmdb ? `
+    <span style="color:#f1c40f;font-weight:bold;font-size:15px;">
+        ★ TMDB 평점 : ${movie.vote ? movie.vote.toFixed(1) : 'N/A'}
+    </span>
+` : `
+    <button class="btn btn-secondary"
+            onclick="likeMovie('${movie.id}')">
+        👍 추천하기
+    </button>
+
+<button class="btn btn-secondary" onclick="editMovie(${movie.id})">
+    ✏ 수정
+</button>
+
+    <button class="btn btn-danger"
+            onclick="deleteMovie('${movie.id}')">
+        🗑 삭제
+    </button>
+`;
 
         container.innerHTML = `
             <div style="margin-bottom: 15px;">
