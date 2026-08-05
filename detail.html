@@ -335,19 +335,44 @@
     }
 
     function likeLocalMovie(id) {
-        let localMovies = JSON.parse(localStorage.getItem('myMovies') || '[]');
-        localMovies = localMovies.map(m => {
-            if (m.id == id) {
-                const likes = (m.likes || 0) + 1;
-                const elem = document.getElementById('likeCount');
-                if (elem) elem.innerText = likes;
-                return { ...m, likes };
-            }
-            return m;
+    let localMovies = JSON.parse(localStorage.getItem('myMovies') || '[]');
+    localMovies = localMovies.map(m => {
+        if (m.id == id) {
+            const likes = (m.likes || 0) + 1;
+            const elem = document.getElementById('likeCount');
+            if (elem) elem.innerText = likes;
+            return { ...m, likes };
+        }
+        return m;
+    });
+    localStorage.setItem('myMovies', JSON.stringify(localMovies));
+    alert('추천되었습니다!');
+}
+async function deleteMovie(id) {
+
+    if (!confirm("삭제하시겠습니까?")) return;
+
+    try {
+
+        const res = await fetch(`/api/movies/${id}`, {
+            method: "DELETE"
         });
-        localStorage.setItem('myMovies', JSON.stringify(localMovies));
-        alert('추천되었습니다!');
+
+        if (res.ok) {
+            alert("삭제되었습니다.");
+            location.href = "index.html";
+        } else {
+            alert("삭제 실패");
+        }
+
+    } catch (err) {
+        console.log(err);
+        alert("서버 오류");
     }
+}
+function editMovie(id){
+    location.href = `addForm.html?id=${id}`;
+}
 
     // 초기화 실행 — id가 없으면 즐겨찾기 모음 페이지로 이동
     window.onload = () => {
@@ -362,6 +387,7 @@
             window.location.href = 'favorites.html';
         }
     };
+    
 </script>
 </body>
 </html>

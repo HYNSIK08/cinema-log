@@ -152,7 +152,7 @@ app.get('/api/movies', async (req, res) => {
     }
 });
 
-// 감상평 단일 조회
+
 app.get('/api/movies/:id', async (req, res) => {
     const { id } = req.params;
     try {
