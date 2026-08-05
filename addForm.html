@@ -139,6 +139,7 @@ const COOL_TIME_MS = 10 * 60 * 60 * 1000;
 
 const params = new URLSearchParams(location.search);
 const editId = params.get("id");
+const movieTitle = params.get("title");
 
 document
 .getElementById("reviewForm")
@@ -252,7 +253,10 @@ submitBtn.innerText=editId?"수정하기":"감상평 등록";
 }
 
 window.onload=async()=>{
-
+if(movieTitle){
+    document.getElementById("title").value = movieTitle;
+    document.getElementById("title").readOnly = true;
+}
 if(!editId)return;
 
 document.getElementById("pageTitle").innerText="✏ 영화 감상평 수정";

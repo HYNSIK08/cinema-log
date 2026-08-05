@@ -584,6 +584,11 @@
     }
 
     window.onload = () => {
+         if (movieTitle) {
+        document.getElementById("title").value = movieTitle;
+    }
+
+    if (!editId) return;
         updateAdminBtn();
         fetchApiMovies(); 
         renderList();
