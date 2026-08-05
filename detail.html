@@ -305,14 +305,29 @@
                 
                 <div class="action-bar">
                     <button class="btn btn-star ${bookmarked ? 'active' : ''}" id="starBtn">
-                        ${bookmarked ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가'}
-                    </button>
-                    <div class="btn-group">
-                        ${actionButtonsHtml}
-                        <a href="index.html" class="btn btn-primary">목록으로</a>
-                    </div>
-                </div>
-            </div>
+                <div class="action-bar">
+    <button class="btn btn-star ${bookmarked ? 'active' : ''}" id="starBtn">
+        ${bookmarked ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가'}
+    </button>
+
+    <div class="btn-group">
+        ${actionButtonsHtml}
+
+        <button class="btn btn-warning"
+                onclick="editMovie('${movie.id}')">
+            ✏ 수정
+        </button>
+
+        <button class="btn btn-danger"
+                onclick="deleteMovie('${movie.id}')">
+            🗑 삭제
+        </button>
+
+        <a href="index.html" class="btn btn-primary">
+            목록으로
+        </a>
+    </div>
+</div>
         `;
 
         document.getElementById('starBtn').onclick = () => toggleBookmark(movie);

@@ -251,7 +251,26 @@ function editMovie(id) {
     location.href = `addForm.html?id=${id}`;
 }
 
+async function deleteMovie(id){
 
+    if(!confirm("삭제하시겠습니까?"))
+        return;
+
+    const res=await fetch(`/api/movies/${id}`,{
+
+        method:"DELETE"
+
+    });
+
+    if(res.ok){
+
+        alert("삭제되었습니다.");
+
+        location.href="index.html";
+
+    }
+
+}
 
 
 window.onload = loadDetail;

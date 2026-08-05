@@ -116,6 +116,7 @@ textarea{
 
 </select>
 
+
 </div>
 
 <div class="form-group">
@@ -135,11 +136,13 @@ textarea{
 
 <script>
 
+
 const COOL_TIME_MS = 10 * 60 * 60 * 1000;
 
 const params = new URLSearchParams(location.search);
 const editId = params.get("id");
 const movieTitle = params.get("title");
+
 
 document
 .getElementById("reviewForm")
@@ -185,7 +188,10 @@ return;
 }
 
 try{
-
+const title = document.getElementById("title").value.trim();
+const writer = document.getElementById("writer").value.trim();
+const genre = document.getElementById("genre").value;
+const content = document.getElementById("content").value.trim();
 const url=editId
 ?`/api/movies/${editId}`
 :"/api/movies";
@@ -194,20 +200,19 @@ const method=editId
 ?"PUT"
 :"POST";
 
-const res=await fetch(url,{
+const res = await fetch(url, {
 
-method,
+    method,
 
-headers:{
-"Content-Type":"application/json"
-},
+    headers: {
+        "Content-Type": "application/json"
+    },
 
-body:JSON.stringify({
-
-title,
-writer,
-genre,
-content
+    body: JSON.stringify({
+        title,
+        writer,
+        genre,
+        content
 
 })
 
@@ -252,38 +257,46 @@ submitBtn.innerText=editId?"수정하기":"감상평 등록";
 
 }
 
-window.onload=async()=>{
-if(movieTitle){
-    document.getElementById("title").value = movieTitle;
-    document.getElementById("title").readOnly = true;
-}
-if(!editId)return;
+window.onload = async () => {
 
-document.getElementById("pageTitle").innerText="✏ 영화 감상평 수정";
+  
+    if (editId) {
 
-document.getElementById("submitBtn").innerText="수정하기";
+        document.querySelector("h2").innerText = "✏ 영화 감상평 수정";
+        document.getElementById("submitBtn").innerText = "수정하기";
 
-try{
+        try {
 
-const res=await fetch(`/api/movies/${editId}`);
+            const res = await fetch(`/api/movies/${editId}`);
 
-if(!res.ok)return;
+            if (!res.ok) return;
 
-const movie=await res.json();
+            const movie = await res.json();
 
-document.getElementById("title").value=movie.title;
-document.getElementById("writer").value=movie.writer;
-document.getElementById("genre").value=movie.genre;
-document.getElementById("content").value=movie.content;
+            document.getElementById("title").value = movie.title;
+            document.getElementById("writer").value = movie.writer;
+            document.getElementById("genre").value = movie.genre;
+            document.getElementById("content").value = movie.content;
 
-}catch(err){
+        } catch(err) {
 
-console.log(err);
+            console.log(err);
 
-}
+        }
 
-}
+        return;
+    }
 
+
+    if (movieTitle) {
+
+        document.getElementById("title").value = movieTitle;
+
+        document.getElementById("title").readOnly = true;
+
+    }
+
+};
 </script>
 
 </body>

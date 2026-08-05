@@ -157,7 +157,6 @@
             <li><a href="index.html" class="active">메인</a></li>
             <li><a href="about.html">사이트 소개</a></li>
             <li><a href="detail.html" id="recentDetailNav">상세 페이지</a></li>
-            <li><a href="favorites.html">⭐ 즐겨찾기</a></li>
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
     </div>
@@ -172,7 +171,7 @@
         <p>장르별 검색, TMDB 실시간 무비 정보 및 자유로운 감상평 다크 갤러리</p>
     </div>
 
-    <!-- TMDB API 가동 영역 (즐겨찾기 중복 방지 + 포스터/평점 저장) -->
+    <!-- TMDB API 가동 영역 (좋아요 없음 / 즐겨찾기 중복 방지 추가) -->
     <div class="api-section">
         <div class="api-header">
             <h2 id="apiSectionTitle">🔥 실시간 인기 트렌드 영화</h2>
@@ -322,7 +321,7 @@
         }
     }
 
-    // ✅ TMDB 트렌드 영역 렌더링 (즐겨찾기 버튼에 실제 영화 객체를 클로저로 연결)
+    // ✅ TMDB 트렌드 영역 렌더링 (좋아요 제거 / 즐겨찾기 중복 검사 로직)
     function renderApiMovies(movies) {
         const container = document.getElementById('apiMovieList');
         container.innerHTML = '';
@@ -343,22 +342,16 @@
                 : fallbackImg;
 
             card.innerHTML = `
-                <button class="bookmark-btn" title="즐겨찾기 추가">★</button>
+                <button class="bookmark-btn" onclick="addBookmark(event, ${movie.id}, '${movie.title.replace(/'/g, "\\'")}')" title="즐겨찾기 추가">★</button>
                 <img src="${posterUrl}" alt="${movie.title}" onerror="this.onerror=null; this.src='${fallbackImg}';">
                 <div class="api-movie-info">
                     <div class="api-movie-title" title="${movie.title}">${movie.title}</div>
                     <div class="api-movie-vote">★ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</div>
                 </div>
             `;
-
-            // 북마크 버튼: 영화 전체 정보를 클로저로 전달 (제목에 따옴표가 있어도 안전)
-            const bookmarkBtn = card.querySelector('.bookmark-btn');
-            bookmarkBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                addBookmark(movie, movie.poster_path ? posterUrl : null);
-            });
             
             card.onclick = (e) => {
+                window.location.href = `addForm.html?title=${encodeURIComponent(movie.title)}`;
                 if (e.target.classList.contains('bookmark-btn')) return;
                 if (confirm(`'${movie.title}' 영화 감상평을 작성하시겠습니까?`)) {
                     window.location.href = `addForm.html?title=${encodeURIComponent(movie.title)}`;
@@ -368,30 +361,21 @@
         });
     }
 
-    // ✅ 즐겨찾기 저장 (중복 방지 + 포스터/장르/평점까지 함께 저장)
-    function addBookmark(movie, posterUrl) {
+    // ✅ 즐겨찾기 중복 저장 방지 함수
+    function addBookmark(event, tmdbId, title) {
+        event.stopPropagation();
         let bookmarks = JSON.parse(localStorage.getItem('myBookmarks') || '[]');
         
         // 중복 저장 검사
-        const isExist = bookmarks.some(b => b.id === movie.id);
+        const isExist = bookmarks.some(b => b.id === tmdbId);
         if (isExist) {
-            alert(`'${movie.title}' 영화는 이미 즐겨찾기에 등록되어 있습니다.`);
+            alert(`'${title}' 영화는 이미 즐겨찾기에 등록되어 있습니다.`);
             return;
         }
 
-        bookmarks.push({
-            id: movie.id,
-            title: movie.title,
-            genre: 'TMDB',
-            writer: 'TMDB 공식 정보',
-            content: movie.overview || '',
-            poster: posterUrl,
-            vote: movie.vote_average || null,
-            isTmdb: true,
-            createdAt: new Date().toISOString()
-        });
+        bookmarks.push({ id: tmdbId, title: title, date: new Date().toLocaleDateString('ko-KR') });
         localStorage.setItem('myBookmarks', JSON.stringify(bookmarks));
-        alert(`'${movie.title}' 영화가 즐겨찾기에 등록되었습니다!`);
+        alert(`'${title}' 영화가 즐겨찾기에 등록되었습니다!`);
     }
 
     // ✅ DB 감상평 목록 렌더링 (서버 API 우선 호출 & detail.html?id=번호 이동)
@@ -584,11 +568,6 @@
     }
 
     window.onload = () => {
-         if (movieTitle) {
-        document.getElementById("title").value = movieTitle;
-    }
-
-    if (!editId) return;
         updateAdminBtn();
         fetchApiMovies(); 
         renderList();
