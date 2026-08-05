@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시네마 로그 - 상세 및 즐겨찾기</title>
+    <title>시네마 로그 - 상세 페이지</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -18,7 +18,6 @@
             --star-color: #f1c40f;
         }
 
-        /* 🔒 이용자의 drag 및 선택 금지 */
         * { 
             box-sizing: border-box; 
             margin: 0; 
@@ -31,7 +30,6 @@
 
         body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding-bottom: 50px; line-height: 1.6; }
 
-        /* 네비게이션 바 */
         .navbar { background-color: var(--card-bg); display: flex; align-items: center; justify-content: space-between; padding: 15px 40px; border-bottom: 1px solid var(--border-color); }
         .nav-left { display: flex; align-items: center; gap: 30px; }
         .navbar-brand { font-size: 20px; font-weight: bold; color: var(--text-main); text-decoration: none; }
@@ -44,14 +42,12 @@
 
         .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
 
-        /* 단일 상세 페이지 스타일 */
         .detail-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 30px; margin-top: 20px; }
         .detail-header { border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px; }
         .detail-title-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; }
         .detail-title { font-size: 26px; font-weight: bold; color: var(--text-main); }
         .detail-meta { display: flex; gap: 15px; color: var(--text-sub); font-size: 14px; flex-wrap: wrap; }
         
-        /* TMDB 상세 포스터 레이아웃 */
         .movie-detail-body { display: flex; gap: 25px; margin-bottom: 30px; flex-wrap: wrap; }
         .poster-img { width: 220px; height: 320px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); }
         .detail-content { flex: 1; font-size: 16px; color: #e2e8f0; white-space: pre-wrap; line-height: 1.8; min-height: 150px; word-break: break-word; }
@@ -67,26 +63,6 @@
         .btn-star { background: #0f172a; border: 1px solid var(--star-color); color: var(--star-color); }
         .btn-star.active { background: var(--star-color); color: #0f172a; }
 
-        /* 즐겨찾기 목록 전용 그리드 스타일 */
-        .bookmark-header { margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; }
-        .bookmark-header h1 { font-size: 24px; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
-        
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-        .movie-card { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 12px; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            transition: transform 0.2s, border-color 0.2s; 
-            cursor: pointer; 
-            word-break: break-word;
-        }
-        .movie-card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
-        .genre-badge { background: #0f172a; border: 1px solid var(--border-color); color: var(--accent-color); font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
-
         .empty-box { text-align: center; padding: 60px 20px; background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 12px; }
         .empty-box p { color: var(--text-sub); font-size: 16px; margin-bottom: 20px; }
     </style>
@@ -99,7 +75,8 @@
         <ul class="nav-menu">
             <li><a href="index.html">메인</a></li>
             <li><a href="about.html">사이트 소개</a></li>
-            <li><a href="detail.html" class="active">즐겨찾기 / 상세</a></li>
+            <li><a href="detail.html" class="active">상세 페이지</a></li>
+            <li><a href="favorites.html">⭐ 즐겨찾기</a></li>
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
     </div>
@@ -183,6 +160,8 @@
         return bookmarks.some(item => item.id == id);
     }
 
+    // ✅ 즐겨찾기 목록 페이지(favorites.html)에서 바로 예쁘게 표시되도록
+    //    포스터/평점/TMDB 여부까지 함께 저장한다.
     function toggleBookmark(movie) {
         let bookmarks = getBookmarks();
         const exists = bookmarks.some(item => item.id == movie.id);
@@ -191,32 +170,26 @@
             bookmarks = bookmarks.filter(item => item.id != movie.id);
             alert(`'${movie.title}' 항목을 즐겨찾기에서 해제했습니다.`);
         } else {
-            // 중복 방지 추가 검사
             bookmarks.push({
                 id: movie.id,
                 title: movie.title,
                 genre: movie.genre || '기타',
                 writer: movie.writer || '익명',
                 content: movie.content || movie.overview || '',
+                poster: movie.poster || null,
+                vote: movie.vote || null,
+                isTmdb: !!movie.isTmdb,
                 createdAt: movie.createdAt || new Date().toISOString()
             });
             alert(`'${movie.title}' 항목을 즐겨찾기에 추가했습니다! ⭐`);
         }
 
         localStorage.setItem('myBookmarks', JSON.stringify(bookmarks));
-        
-        // 현재 페이지 재렌더링
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get('id');
-        if (id) {
-            loadSingleDetail(id);
-        } else {
-            renderBookmarkList();
-        }
+        loadSingleDetail(movie.id);
     }
 
     // ----------------------------------------------------
-    // 1️⃣ 단일 게시글 상세 조회 화면 (서버 API 최우선 연동)
+    // 단일 게시글 상세 조회 화면 (서버 API 최우선 연동)
     // ----------------------------------------------------
     async function loadSingleDetail(id) {
         const container = document.getElementById('mainContainer');
@@ -239,6 +212,7 @@
                 const tmdbRes = await fetch(`/api/tmdb/movie/${id}`);
                 if (tmdbRes.ok) {
                     const tmdbData = await tmdbRes.json();
+                    isTmdb = true;
                     movie = {
                         id: tmdbData.id,
                         title: tmdbData.title,
@@ -247,9 +221,9 @@
                         content: tmdbData.overview || '줄거리 정보가 제공되지 않습니다.',
                         poster: tmdbData.poster_path ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}` : null,
                         vote: tmdbData.vote_average,
-                        createdAt: tmdbData.release_date
+                        createdAt: tmdbData.release_date,
+                        isTmdb: true
                     };
-                    isTmdb = true;
                 }
             } catch (err) {
                 console.log("TMDB API 서버 조회 실패");
@@ -274,7 +248,6 @@
         }
 
         const bookmarked = isBookmarked(movie.id);
-        // ✅ 날짜 기본값 "2026. 08. 04" 대신 "-" 로 지정
         const dateStr = movie.createdAt ? new Date(movie.createdAt).toLocaleDateString('ko-KR') : '-';
 
         let bodyContent = `
@@ -290,7 +263,6 @@
             `;
         }
 
-        // TMDB일 경우 추천 버튼 대신 평점 표시, DB글일 경우 추천 버튼 활성화
         const actionButtonsHtml = isTmdb ? `
             <span style="color: #f1c40f; font-weight: bold; font-size: 15px;">★ TMDB 평점: ${movie.vote ? movie.vote.toFixed(1) : 'N/A'}</span>
         ` : `
@@ -305,7 +277,7 @@
                 <div class="detail-header">
                     <div class="detail-title-row">
                         <h1 class="detail-title">${movie.title}</h1>
-                        <span class="genre-badge">${movie.genre || '기타'}</span>
+                        <span class="genre-badge" style="background:#0f172a; border:1px solid var(--border-color); color:var(--accent-color); font-size:12px; padding:3px 8px; border-radius:12px; font-weight:bold;">${movie.genre || '기타'}</span>
                     </div>
                     <div class="detail-meta">
                         <span>✍️ 작성자: ${movie.writer || '익명'}</span>
@@ -332,7 +304,6 @@
         document.getElementById('starBtn').onclick = () => toggleBookmark(movie);
     }
 
-    // 게시글 추천(좋아요) 처리
     async function likeMovie(id) {
         try {
             const res = await fetch(`/api/movies/${id}/like`, { method: 'POST' });
@@ -364,61 +335,7 @@
         alert('추천되었습니다!');
     }
 
-    // ----------------------------------------------------
-    // 2️⃣ ID 파라미터 없을 때: ⭐ 즐겨찾기 목록 화면 렌더링
-    // ----------------------------------------------------
-    function renderBookmarkList() {
-        const container = document.getElementById('mainContainer');
-        const bookmarks = getBookmarks();
-
-        if (bookmarks.length === 0) {
-            container.innerHTML = `
-                <div class="bookmark-header">
-                    <h1>⭐ 내가 즐겨찾기한 감상평 및 영화</h1>
-                </div>
-                <div class="empty-box">
-                    <p>아직 즐겨찾기(북마크)에 추가된 항목이 없습니다.</p>
-                    <p style="font-size: 14px; color: var(--text-sub);">마음에 드는 감상평 상세 페이지 또는 메인 트렌드에서 ⭐ 즐겨찾기를 눌러보세요!</p>
-                    <br>
-                    <a href="index.html" class="btn btn-primary">🎬 전체 감상평 보러가기</a>
-                </div>
-            `;
-            return;
-        }
-
-        let html = `
-            <div class="bookmark-header">
-                <h1>⭐ 내가 즐겨찾기한 목록 (${bookmarks.length}개)</h1>
-            </div>
-            <div class="grid-container">
-        `;
-
-        bookmarks.forEach(m => {
-            // ✅ 날짜 기본값 "-" 로 처리
-            const dateStr = m.createdAt || m.date ? (m.createdAt ? new Date(m.createdAt).toLocaleDateString('ko-KR') : m.date) : '-';
-            html += `
-                <div class="movie-card" onclick="window.location.href='detail.html?id=${m.id}'">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-                            <h3 style="font-size:18px; color:var(--text-main); font-weight:bold;">${m.title}</h3>
-                            <span class="genre-badge">${m.genre || '기타'}</span>
-                        </div>
-                        <p style="font-size:13px; color:var(--text-sub); margin-bottom:12px;">✍️ ${m.writer || '익명'} | 📅 ${dateStr}</p>
-                        <p style="font-size:14px; color:var(--text-sub); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${m.content || '상세내용 보기'}</p>
-                    </div>
-                    <div style="border-top:1px solid var(--border-color); padding-top:10px; margin-top:15px; display:flex; justify-content:space-between; font-size:12px; color:var(--text-sub);">
-                        <span>👁️ ${m.views || 0} | 👍 ${m.likes || 0}</span>
-                        <span style="color:var(--star-color); font-weight:bold;">⭐ 저장됨</span>
-                    </div>
-                </div>
-            `;
-        });
-
-        html += `</div>`;
-        container.innerHTML = html;
-    }
-
-    // 초기화 실행
+    // 초기화 실행 — id가 없으면 즐겨찾기 모음 페이지로 이동
     window.onload = () => {
         updateAdminBtn();
 
@@ -428,7 +345,7 @@
         if (movieId) {
             loadSingleDetail(movieId);
         } else {
-            renderBookmarkList();
+            window.location.href = 'favorites.html';
         }
     };
 </script>

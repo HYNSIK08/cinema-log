@@ -16,7 +16,6 @@
             --warning-color: #f59e0b;
         }
 
-        /* 🔒 이용자의 drag 및 선택 금지 */
         * { 
             box-sizing: border-box; 
             margin: 0; 
@@ -35,7 +34,6 @@
             line-height: 1.6;
         }
 
-        /* 네비게이션 바 */
         .navbar { 
             background-color: var(--card-bg); 
             display: flex; 
@@ -62,10 +60,8 @@
         }
         .admin-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
 
-        /* 컨테이너 */
         .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
 
-        /* 히어로 히더 */
         .about-hero {
             text-align: center;
             padding: 50px 20px;
@@ -78,7 +74,6 @@
         .about-hero p { font-size: 16px; color: var(--text-sub); max-width: 600px; margin: 0 auto; }
         .highlight { color: var(--accent-color); font-weight: bold; }
 
-        /* 주요 특징 섹션 (그리드) */
         .section-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
         
         .grid-features {
@@ -102,7 +97,6 @@
         .feature-card h3 { font-size: 18px; margin-bottom: 8px; color: var(--text-main); }
         .feature-card p { font-size: 14px; color: var(--text-sub); }
 
-        /* 이용 가이드 & 기술 스택 세부 정보 */
         .info-box {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -123,7 +117,6 @@
             font-weight: bold;
         }
 
-        /* 하단 CTA */
         .cta-section {
             text-align: center;
             padding: 30px;
@@ -147,7 +140,6 @@
 </head>
 <body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
 
-<!-- 네비게이션 바 -->
 <nav class="navbar">
     <div class="nav-left">
         <a href="index.html" class="navbar-brand">🎬 시네마 로그</a>
@@ -155,6 +147,7 @@
             <li><a href="index.html">메인</a></li>
             <li><a href="about.html" class="active">사이트 소개</a></li>
             <li><a href="detail.html" id="recentDetailNav">상세 페이지</a></li>
+            <li><a href="favorites.html">⭐ 즐겨찾기</a></li>
             <li><a href="addForm.html">+ 감상평 등록</a></li>
         </ul>
     </div>
@@ -164,13 +157,11 @@
 </nav>
 
 <div class="container">
-    <!-- 히어로 섹션 -->
     <div class="about-hero">
         <h1>영화의 감동을 이야기하는 공간 <span class="highlight">시네마 로그</span></h1>
         <p>TMDB 실시간 최신 영화 정보 확인부터 개인 감상평 작성, 장르별 필터링까지 나만의 영화 이야기를 구축해보세요.</p>
     </div>
 
-    <!-- 핵심 기능 섹션 -->
     <h2 class="section-title">✨ 주요 기능</h2>
     <div class="grid-features">
         <div class="feature-card">
@@ -184,9 +175,9 @@
             <p>영화 제목, 장르, 작성자, 감상 후기를 남기며 조회수 및 추천(좋아요) 기능을 제공합니다.</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🎯</span>
-            <h3>필터링 & 검색</h3>
-            <p>자기가 원하는 장르별 카테고리 필터와 제목을 실시간으로 검색하고 원하는 감상평을 빠르고 쉽게 찾을 수 있습니다.</p>
+            <span class="feature-icon">⭐</span>
+            <h3>즐겨찾기 모아보기</h3>
+            <p>마음에 드는 TMDB 영화나 감상평을 즐겨찾기에 담아두면 전용 페이지에서 언제든 다시 찾아볼 수 있습니다.</p>
         </div>
         <div class="feature-card">
             <span class="feature-icon">🔒</span>
@@ -195,13 +186,16 @@
         </div>
     </div>
 
-    <!-- 이용 안내 섹션 -->
     <h2 class="section-title">💡 이용 안내</h2>
     <div class="info-box">
         <ul class="info-list">
             <li>
                 <span class="badge">감상평 작성</span>
                 <span>TMDB 검색 카드의 영화를 클릭하면 해당 영화 제목이 자동 입력된 상태로 편리하게 감상평을 작성할 수 있습니다.</span>
+            </li>
+            <li>
+                <span class="badge">즐겨찾기</span>
+                <span>메인 화면 TMDB 카드의 ★ 버튼, 혹은 상세 페이지의 '즐겨찾기 추가' 버튼을 누르면 <strong>즐겨찾기</strong> 메뉴에서 모아볼 수 있습니다.</span>
             </li>
             <li>
                 <span class="badge">데이터 보존</span>
@@ -214,7 +208,6 @@
         </ul>
     </div>
 
-    <!-- 하단 이동 섹션 -->
     <div class="cta-section">
         <h3>지금 바로 당신의 첫 영화 감상평을 남겨보세요!</h3>
         <a href="addForm.html" class="cta-btn">✏️ 감상평 작성하러 가기</a>
@@ -222,7 +215,6 @@
 </div>
 
 <script>
-    // 🔒 단축키 차단 (F12, Ctrl+Shift+I, Ctrl+U 등)
     document.addEventListener('keydown', function(e) {
         if (e.keyCode === 123) { e.preventDefault(); return false; }
         if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
@@ -230,12 +222,10 @@
         if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
     });
 
-    // 관리자 로그인 상태 확인
     function checkAdmin() {
         return localStorage.getItem('isAdmin') === 'true';
     }
 
-    // 관리자 버튼 텍스트 업데이트
     function updateAdminBtn() {
         const btn = document.getElementById('adminToggleBtn');
         if (checkAdmin()) {
@@ -247,7 +237,6 @@
         }
     }
 
-    // 관리자 토글 함수
     async function toggleAdmin() {
         if (checkAdmin()) {
             localStorage.setItem('isAdmin', 'false');
@@ -279,7 +268,6 @@
         }
     }
 
-    // 네비게이션 "상세 페이지" 동적 링크 연결
     function setupNavDetail() {
         const localMovies = JSON.parse(localStorage.getItem('myMovies') || '[]');
         const navDetailBtn = document.getElementById('recentDetailNav');
