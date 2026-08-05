@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>오류 - 시네마 로그</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav class="nav"><a th:href="@{/}"><b>🎬 시네마 로그</b></a></nav>
+<main class="container">
+    <section class="card">
+        <h1 th:text="|오류 ${status}|">오류</h1>
+        <p class="content" th:text="${message}">요청 처리 중 오류가 발생했습니다.</p>
+        <a class="btn" th:href="@{/}">메인으로</a>
+    </section>
+</main>
+</body>
+</html>
